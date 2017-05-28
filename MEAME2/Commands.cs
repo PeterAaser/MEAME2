@@ -3,6 +3,8 @@ using System.Linq;
 
 namespace MEAME2
 {
+
+  [Serializable]
   public class DebugMessage
   {
     public string message { get; set; }
@@ -13,6 +15,7 @@ namespace MEAME2
 	}
 
 
+  [Serializable]
   public class StimReq{
     public int[] electrodes { get; set; }
     public double[] stimFreqs { get; set; }

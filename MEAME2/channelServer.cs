@@ -16,8 +16,9 @@ namespace MEAME2
     private static int allChannelsPort = 12340;
     private static int selectiveChannelsPort = 12341;
 
-    public ChannelServer(ConnectionManager cm) =>
+    public ChannelServer(ConnectionManager cm) {
       this.cm = cm;
+    }
 
 
     public void startListener()
