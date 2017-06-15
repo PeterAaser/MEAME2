@@ -1,0 +1,11 @@
+/home/peteraa/datateknikk/MEAME2/MEAME2/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/MEAME2.pdb
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/MEAME2.exe
+/home/peteraa/datateknikk/MEAME2/MEAME2/obj/x86/Debug/MEAME2.exe
+/home/peteraa/datateknikk/MEAME2/MEAME2/obj/x86/Debug/MEAME2.pdb
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/McsUsbNet.dll
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/Nancy.dll
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/Newtonsoft.Json.dll
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/Nancy.Hosting.Self.dll
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/FluentValidation.dll
+/home/peteraa/datateknikk/MEAME2/MEAME2/bin/Debug/Nancy.Validation.FluentValidation.dll

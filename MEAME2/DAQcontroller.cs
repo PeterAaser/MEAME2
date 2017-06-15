@@ -9,12 +9,11 @@ namespace MEAME2
   public class DAQ {
 
     public int samplerate { get; set; }
-    public int channelBlockSize { get; set; }
+    public int segmentLength { get; set; }
     static int mChannelHandles { get; set; }
     static int hwchannels { get; set; }
-    static int channelblocksize { get; set; }
     public SampleSizeNet dataFormat { get; set; }
-    public Action<int, int[], int, int> onChannelData { get; set; }
+    public Action<Dictionary<int, int[]>, int> onChannelData { get; set; }
 
     public override String ToString(){
       return deviceInfo;
@@ -39,6 +38,8 @@ namespace MEAME2
     public bool connectDataAcquisitionDevice(uint index){
 
       Console.WriteLine("Connecting data acquisition object to device");
+      Console.WriteLine($"samplerate: {samplerate}");
+      Console.WriteLine($"segmentLength: {segmentLength}");
 
       this.dataFormat = SampleSizeNet.SampleSize32Signed;
 
@@ -68,9 +69,13 @@ namespace MEAME2
       hwchannels = what;
 
       dataAcquisitionDevice.SetNumberOfChannels(hwchannels);
-      dataAcquisitionDevice.EnableDigitalIn(true, 0);
-      dataAcquisitionDevice.EnableChecksum(true, 0);
+      dataAcquisitionDevice.EnableDigitalIn(false, 0);
+      dataAcquisitionDevice.EnableChecksum(false, 0);
       dataAcquisitionDevice.SetDataMode(DataModeEnumNet.dmSigned32bit, 0);
+
+      // block:
+      // get the number of 16 bit datawords which will be collected per sample frame,
+      // use after the device is configured. (which means?, setting data mode, num channels etc?)
 
       int ana, digi, che, tim, block;
       dataAcquisitionDevice.GetChannelLayout(out ana, out digi, out che, out tim, out block, 0);
@@ -83,16 +88,29 @@ namespace MEAME2
       dataAcquisitionDevice.HWInfo().
         GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(out voltageranges);
 
+
       bool[] selectedChannels = new bool[block];
       for (int i = 0; i < block; i++){ selectedChannels[i] = true; } // hurr
 
-      channelblocksize = 128;
+      // dataAcquisitionDevice.SetSelectedData(selectedChannels,
+      //                                       10 * segmentLength,
+      //                                       segmentLength,
+      //                                       dataFormat,
+      //                                       block);
 
-      dataAcquisitionDevice.SetSelectedData(selectedChannels,
-                                            10 * channelblocksize,
-                                            channelblocksize,
-                                            dataFormat,
-                                            block);
+      // dataAcquisitionDevice.AddSelectedChannelsQueue(
+      //                                                0,
+      //                                                1,
+      //                                                10*segmentLength,
+      //                                                segmentLength,
+      //                                                dataFormat);
+
+      dataAcquisitionDevice.SetSelectedChannelsQueue(
+                               selectedChannels,
+                               10*segmentLength,
+                               segmentLength,
+                               dataFormat,
+                               block/2);
 
       mChannelHandles = block;
 
@@ -102,6 +120,15 @@ namespace MEAME2
 
       int validDataBits = -1;
       int deviceDataFormat = -1;
+
+      //
+      // Summary:
+      //     Get the real number of data bits.
+      //
+      // Remarks:
+      //     This value may be different from the value returned by GetDataFormat, e.g. in
+      //     MC_Card the data are shifted 2 bits so the real number is 14 while the data format
+      //     is 16 bits
       dataAcquisitionDevice.GetNumberOfDataBits(0,
                                                 DacqGroupChannelEnumNet.HeadstageElectrodeGroup,
                                                 out validDataBits);
@@ -112,6 +139,15 @@ namespace MEAME2
 
       DataModeEnumNet dataMode = dataAcquisitionDevice.GetDataMode(0);
 
+      //
+      // Summary:
+      //     Get the number of 16 bit datawords which will be collected per sample frame,
+      //     use after the device is configured.
+      //
+      // Returns:
+      //     Number of 16 bit datawords per sample frame.
+
+      // Returns 132 (66 32 bit words???)
       int meme = dataAcquisitionDevice.GetChannelsInBlock();
 
       deviceInfo =
@@ -121,29 +157,60 @@ namespace MEAME2
         $"Voltage range: {voltageranges[0].VoltageRangeDisplayStringMilliVolt}\n" +
         $"Corresponding to {voltageranges[0].VoltageRangeInMicroVolt} µV\n" +
         "--- channel layout ---\n" +
-        $"hardware channels: {hwchannels}\n" +
-        $"analog channels: {ana}\n" +
-        $"digital channels: {digi}\n" +
-        $"che(??) channels: {che}\n" +
+        $"hardware channels: {hwchannels}\n" +           // 64
+        $"analog channels: {ana}\n" +                    // 128
+        $"digital channels: {digi}\n" +                  // 2
+        $"che(??) channels: {che}\n" +                   // 4
         $"tim(??) channels: {tim}\n" +
         "---\n" +
         $"valid data bits: {validDataBits}\n" +          // 24
         $"device data format: {deviceDataFormat}\n" +    // 32
-        $"device data mode: {dataMode}\n";               // dmSigned24bit
+        $"device data mode: {dataMode}\n" +              // dmSigned24bit
+        $"nice meme: {meme}\n" +
+        "";
 
       return true;
 
     }
 
     private void _onChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples){
+      Console.WriteLine("got data:");
+      Console.WriteLine(d);
+      Console.WriteLine(cbHandle);
+      Console.WriteLine(numSamples);
+      Console.WriteLine("\n\n\n");
+      try {
 
-      int returnedFrames, totalChannels, offset, channels;
+        int returnedFrames, totalChannels, offset, channels;
 
-      dataAcquisitionDevice.ChannelBlock_GetChannel(0, 0, out totalChannels, out offset, out channels);
+        int handle = 0;
+        int channelEntry = 0;
+        int frames = 0;
 
-      int[] data = dataAcquisitionDevice.ChannelBlock_ReadFramesI32(0, channelblocksize, out returnedFrames);
+        dataAcquisitionDevice.ChannelBlock_GetChannel(handle,
+                                                      channelEntry,
+                                                      out totalChannels,
+                                                      out offset,
+                                                      out channels);
 
-      onChannelData(mChannelHandles, data, totalChannels, returnedFrames);
+
+
+        // int[] data = dataAcquisitionDevice.ChannelBlock_ReadFramesI32(
+        //                                                               handle,
+        //                                                               segmentLength,
+        //                                                               out returnedFrames);
+
+        Dictionary<int,int[]> data = dataAcquisitionDevice.ChannelBlock_ReadFramesDictI32(handle,
+                                                                                          segmentLength,
+                                                                                          out returnedFrames);
+
+        onChannelData(data, returnedFrames);
+      }
+      catch (Exception e){
+        Console.WriteLine("_onChannelData exception ---------------- ");
+        Console.WriteLine(e);
+        Console.WriteLine("_onChannelData exception ---------------- ");
+      }
     }
 
 
@@ -152,7 +219,18 @@ namespace MEAME2
       Console.WriteLine(info);
       Console.WriteLine(msg);
       Console.WriteLine("~~~~~~~~ Error! ~~~~~~~~~ :( ~~~~~~~~ )");
-      dataAcquisitionDevice.StopDacq();
+      try {
+        dataAcquisitionDevice.StopDacq();
+        dataAcquisitionDevice.Dispose();
+      }
+      catch (Exception e)
+        {
+          Console.WriteLine("Got exception");
+          Console.WriteLine(e);
+          Console.WriteLine("Ignoring.. YOLO");
+        }
     }
   }
 }
+
+

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Mcs.Usb;
 
 namespace MEAME2
 {
@@ -27,10 +28,12 @@ namespace MEAME2
       Thread listener2 = new Thread( () => selectiveChannelListener(cm) );
 
       listener.Start();
+      listener2.Start();
     }
 
 
     private static void allChannelListener(ConnectionManager cm) {
+      Console.WriteLine("starting all channel listener");
       IPAddress myip;
       IPAddress.TryParse(ipstring, out myip);
       Socket listener = new Socket(AddressFamily.InterNetwork,
@@ -54,6 +57,7 @@ namespace MEAME2
 
 
     private static void selectiveChannelListener(ConnectionManager cm) {
+      Console.WriteLine("starting selective channel listener");
       IPAddress myip;
       IPAddress.TryParse(ipstring, out myip);
       Socket listener = new Socket(AddressFamily.InterNetwork,
@@ -66,6 +70,10 @@ namespace MEAME2
       while (true){
         Console.WriteLine($"Server is listening on port {selectiveChannelsPort}");
         Socket connection = listener.Accept();
+
+        Thread stimThread = new Thread( () => attachReader(connection) );
+        stimThread.Start();
+
         Console.WriteLine($"Connection to port {selectiveChannelsPort} accepted. Selective data");
 
         cm.selectiveListeners.Add(connection);
@@ -73,6 +81,33 @@ namespace MEAME2
 
       listener.Close();
       return;
+    }
+
+
+    public static void attachReader(Socket socket)
+    {
+      Console.WriteLine("STIM READER STARTED");
+      NetworkStream ns = new NetworkStream(socket);
+      StreamReader streamreader = new StreamReader(ns);
+      int throttle = 0;
+
+      while (true)
+        {
+          // string memeString = streamreader.ReadLine();
+          // StringReader memeReader = new StringReader(memeString);
+          // JsonTextReader memer = new JsonTextReader(memeReader);
+          // JsonSerializer serializer = new JsonSerializer();
+          // StimReq s = serializer.Deserialize<StimReq>(memer);
+          // if(throttle == 40)
+          //   {
+          //     Console.WriteLine(s);
+          //     throttle = 0;
+          //   }
+          // else
+          //   {
+          //     throttle++;
+          //   }
+        }
     }
   }
 }

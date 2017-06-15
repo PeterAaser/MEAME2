@@ -1,23 +1,7 @@
-* Specs
-** Should be able to handle all nescessary interfacing with MCS hardware
-*** Flashing
-*** Getting data
-*** Stimulating
-** Should offer an API to the outside world
-*** Provide API for listening to channels
-*** Provide API for sending stimuli
-*** Provide API for starting/stopping HW
-*** Possibly provide API for flashing
+* Notes from original code
+** uses the following:
+*** setSelectData
+*** AddSelecteChannelsQueue
+*** ChannelBlock_SetCommonThreshold
 
-* Notes and thoughts
-  Use HTTP REST API.
-  A GET with information about channels etc should return either a success
-  and a port for getting raw data, or a failure with a reason as to why
-  (equipment not on, equipment not working etc etc)
-
-  The server can
-** Check for devices, provide device info
-** Configure DAQ
-** Start DAQ
-
-
+* About DAQ

@@ -4,6 +4,8 @@ using System.Text;
 using System.Collections.Generic;
 using Nancy.ModelBinding;
 using Nancy.Validation;
+using Nancy.Bootstrapper;
+using Nancy.TinyIoc;
 using System;
 using System.IO;
 using Newtonsoft.Json;
@@ -11,31 +13,55 @@ using Newtonsoft.Json;
 
 namespace MEAME2
 {
+  public class Bootstrapper : DefaultNancyBootstrapper
+  {
+    protected override void ConfigureApplicationContainer(TinyIoCContainer container)
+    {
+      base.ConfigureApplicationContainer(container);
+      // Autoregister will actually do this for us, so we don't need this line,
+      // but I'll keep it here to demonstrate. By Default anything registered
+      // against an interface will be a singleton instance.
+
+      container.Register<IMEAMEcontrol, MEAMEcontrol>().AsSingleton();
+    }
+  }
+
   public class MEAMEserver : NancyModule
   {
-    private MEAMEcontrol controller;
 
-    public MEAMEserver(MEAMEcontrol controller){
+
+    public IMEAMEcontrol controller;
+
+    public MEAMEserver(IMEAMEcontrol controller){
 
       this.controller = controller;
 
-      Get["/status"] = _ => this.status();
-      Get["/"] = _ => "welcome to MEAME";
+      Get["/status"] = _ => this.hello();
+      Get["/"] = _ => "hello this is MEAME.";
 
       Post["/DAQ/connect"] = _ => connectDAQ();
-      Post["/DAQ/start"] = _ => startDAQ();
-      Post["/DAQ/stop"] = _ => stopDAQ();
+      Get["/DAQ/start"] = _ => startDAQ();
+      Get["/DAQ/stop"] = _ => stopDAQ();
 
     }
 
 
-    private string getJsonBody(){
+    private string getJsonBody()
+    {
       var id = this.Request.Body;
       long length = this.Request.Body.Length;
       byte[] data = new byte[length];
       id.Read(data, 0, (int)length);
       string body = System.Text.Encoding.Default.GetString(data);
       return body;
+    }
+
+
+    private dynamic hello(){
+      Console.WriteLine("\n---[Runnin Hello]---");
+      Console.WriteLine("Hello :DD");
+      Console.WriteLine("---[ Hello :) ]---");
+      return "Hello :D";
     }
 
 
@@ -59,36 +85,59 @@ namespace MEAME2
     }
 
 
+    // Requires a JSON in the body
     private dynamic connectDAQ(){
+
+      Console.WriteLine("\n---[Runnin connectDAQ]---");
+
       string body = this.getJsonBody();
       Console.WriteLine(body);
 
-      StringReader memeReader = new StringReader(body);
-      JsonTextReader memer = new JsonTextReader(memeReader);
-      JsonSerializer serializer = new JsonSerializer();
-      DAQconfig d = serializer.Deserialize<DAQconfig>(memer);
+      try {
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        DAQconfig d = serializer.Deserialize<DAQconfig>(memer);
 
-      bool connect = controller.connectDAQ(d);
+        bool connect = controller.connectDAQ(d);
 
-      if (connect){
-        return 200;
+        if (connect){
+          Console.WriteLine("---[200]---");
+          return 200;
+        }
+        Console.WriteLine("---[ERROR: connectDAQ failed]---");
+        return 500; // what if it's just a generic error? dunno lol use remmina...
+      }
+      catch (Exception e){ // should only catch deserialize error, dunno how xD
+        Console.WriteLine("malformed request");
+        Console.WriteLine("---[ERROR: Malformed request]---");
+        Console.WriteLine(e);
+        Console.WriteLine("---[ERROR: Malformed request]---");
+        return 500;
       }
 
-      return 500; // what if it's just a generic error? dunno lol use remmina...
+
     }
 
 
     private dynamic startDAQ(){
+      Console.WriteLine("\n---[Runnin startDAQ]---");
+
       if (controller.startServer())
         {
+          Console.WriteLine("---[200]---");
           return 200;
         }
 
+      Console.WriteLine("---[ERROR: Something wrong with startServer]---");
       return 500;
     }
 
 
     private dynamic stopDAQ(){
+
+      Console.WriteLine("Runnin stopDAQ");
+
       if (controller.stopServer())
         {
           return 200;

@@ -8,11 +8,9 @@ namespace MEAME2
   {
     public static void Main (string[] args)
     {
+      AppDomain.CurrentDomain.ProcessExit += new EventHandler (OnProcessExit); 
 
       Console.WriteLine ("STARTING MEAME SERVER");
-      Console.WriteLine ("Setting up DI stuff");
-
-      var controller = new MEAMEcontrol();
 
       var nancyHost = new NancyHost(new Uri("http://localhost:8888/"));
 
@@ -22,6 +20,11 @@ namespace MEAME2
       Console.ReadKey();
       nancyHost.Stop();
       Console.WriteLine("Stopped, see ya!");
+    }
+
+    static void OnProcessExit (object sender, EventArgs e)
+    {
+      Console.WriteLine ("I'm out of here");
     }
   }
 }
