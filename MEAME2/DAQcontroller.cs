@@ -92,25 +92,13 @@ namespace MEAME2
       bool[] selectedChannels = new bool[block];
       for (int i = 0; i < block; i++){ selectedChannels[i] = true; } // hurr
 
-      // dataAcquisitionDevice.SetSelectedData(selectedChannels,
-      //                                       10 * segmentLength,
-      //                                       segmentLength,
-      //                                       dataFormat,
-      //                                       block);
 
-      // dataAcquisitionDevice.AddSelectedChannelsQueue(
-      //                                                0,
-      //                                                1,
-      //                                                10*segmentLength,
-      //                                                segmentLength,
-      //                                                dataFormat);
-
-      dataAcquisitionDevice.SetSelectedChannelsQueue(
-                               selectedChannels,
-                               10*segmentLength,
-                               segmentLength,
-                               dataFormat,
-                               block/2);
+      dataAcquisitionDevice.SetSelectedChannelsQueue
+        (selectedChannels,
+         10*segmentLength,
+         segmentLength,
+         dataFormat,
+         block/2);
 
       mChannelHandles = block;
 
@@ -174,11 +162,6 @@ namespace MEAME2
     }
 
     private void _onChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples){
-      Console.WriteLine("got data:");
-      Console.WriteLine(d);
-      Console.WriteLine(cbHandle);
-      Console.WriteLine(numSamples);
-      Console.WriteLine("\n\n\n");
       try {
 
         int returnedFrames, totalChannels, offset, channels;
@@ -187,32 +170,27 @@ namespace MEAME2
         int channelEntry = 0;
         int frames = 0;
 
-        dataAcquisitionDevice.ChannelBlock_GetChannel(handle,
-                                                      channelEntry,
-                                                      out totalChannels,
-                                                      out offset,
-                                                      out channels);
+        dataAcquisitionDevice.ChannelBlock_GetChannel
+          (handle,
+           channelEntry,
+           out totalChannels,
+           out offset,
+           out channels);
 
-
-
-        // int[] data = dataAcquisitionDevice.ChannelBlock_ReadFramesI32(
-        //                                                               handle,
-        //                                                               segmentLength,
-        //                                                               out returnedFrames);
-
-        Dictionary<int,int[]> data = dataAcquisitionDevice.ChannelBlock_ReadFramesDictI32(handle,
-                                                                                          segmentLength,
-                                                                                          out returnedFrames);
+        Dictionary<int,int[]> data = dataAcquisitionDevice.ChannelBlock_ReadFramesDictI32
+          (handle,
+           segmentLength,
+           out returnedFrames);
 
         onChannelData(data, returnedFrames);
       }
       catch (Exception e){
         Console.WriteLine("_onChannelData exception ---------------- ");
         Console.WriteLine(e);
-        Console.WriteLine("_onChannelData exception ---------------- ");
+        dataAcquisitionDevice.Disconnect();
+        throw e;
       }
     }
-
 
 
     private void onError(String msg, int info){
@@ -232,5 +210,3 @@ namespace MEAME2
     }
   }
 }
-
-
