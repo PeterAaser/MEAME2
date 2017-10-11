@@ -26,6 +26,5 @@ namespace MEAME2
   public class DAQconfig {
     public int samplerate { get; set; }
     public int segmentLength { get; set; }
-    public int[] specialChannels { get; set; }
   }
 }

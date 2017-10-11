@@ -30,7 +30,7 @@ namespace MEAME2
 
 
     private static void allChannelListener(ConnectionManager cm) {
-      Console.WriteLine("starting all channel listener");
+
       IPAddress myip;
       IPAddress.TryParse(ipstring, out myip);
       Socket listener = new Socket(AddressFamily.InterNetwork,
@@ -41,9 +41,10 @@ namespace MEAME2
       listener.Listen(10);
 
       while (true){
-        Console.WriteLine($"Server is listening on port {allChannelsPort}");
         Socket connection = listener.Accept();
-        Console.WriteLine($"Connection to port {allChannelsPort} accepted. Full data");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"[TCP Info]: Connection to port {allChannelsPort} accepted");
+        Console.ResetColor();
 
         cm.allChannelListeners.Add(connection);
       }

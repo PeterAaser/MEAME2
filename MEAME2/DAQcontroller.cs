@@ -23,23 +23,19 @@ namespace MEAME2
     private CMeaDeviceNet dataAcquisitionDevice;
     private string deviceInfo = "Uninitialized DACQ device";
 
+    // To say I hate writing code like this is an understatement
     public bool startDevice(){
-      Console.WriteLine("Starting device");
-      dataAcquisitionDevice.StartDacq();
-      Console.WriteLine("Device started");
-      return true;
+      try { dataAcquisitionDevice.StartDacq(); return true; }
+      catch (Exception e) { return false; }
     }
 
     public bool stopDevice(){
-      dataAcquisitionDevice.StopDacq();
-      return true;
+      try { dataAcquisitionDevice.StopDacq(); return true; }
+      catch (Exception e) { return false; }
     }
 
-    public bool connectDataAcquisitionDevice(uint index){
 
-      Console.WriteLine("Connecting data acquisition object to device");
-      Console.WriteLine($"samplerate: {samplerate}");
-      Console.WriteLine($"segmentLength: {segmentLength}");
+    public bool connectDataAcquisitionDevice(uint index){
 
       this.dataFormat = SampleSizeNet.SampleSize32Signed;
 
@@ -48,20 +44,17 @@ namespace MEAME2
         dataAcquisitionDevice.Disconnect();
         dataAcquisitionDevice.Dispose();
         dataAcquisitionDevice = null;
-        Console.WriteLine("this shouldn't be printed 123");
+        throw new System.ArgumentException("Reached bad code path", "DAQ is null, mcs cruft");
       }
 
-      Console.WriteLine("Creating data acquisition device");
       dataAcquisitionDevice = new CMeaDeviceNet(usblist.GetUsbListEntry(index).DeviceId.BusType,
                                                 _onChannelData,
                                                 onError);
 
+
       // The second arg refers to lock mask, allowing multiple device objects to be connected
       // to the same physical device. Yes, I know, what the fuck...
-      Console.WriteLine("Connecting");
       dataAcquisitionDevice.Connect(usblist.GetUsbListEntry(index), 1);
-
-      Console.WriteLine("Sending stop signal");
       dataAcquisitionDevice.SendStop();
 
       int what = 0;
@@ -76,9 +69,9 @@ namespace MEAME2
       // block:
       // get the number of 16 bit datawords which will be collected per sample frame,
       // use after the device is configured. (which means?, setting data mode, num channels etc?)
-
       int ana, digi, che, tim, block;
       dataAcquisitionDevice.GetChannelLayout(out ana, out digi, out che, out tim, out block, 0);
+
 
       dataAcquisitionDevice.SetSampleRate(samplerate, 1, 0);
 
@@ -127,14 +120,13 @@ namespace MEAME2
 
       DataModeEnumNet dataMode = dataAcquisitionDevice.GetDataMode(0);
 
-      //
+
       // Summary:
       //     Get the number of 16 bit datawords which will be collected per sample frame,
       //     use after the device is configured.
       //
       // Returns:
       //     Number of 16 bit datawords per sample frame.
-
       // Returns 132 (66 32 bit words???)
       int meme = dataAcquisitionDevice.GetChannelsInBlock();
 
@@ -185,8 +177,10 @@ namespace MEAME2
         onChannelData(data, returnedFrames);
       }
       catch (Exception e){
-        Console.WriteLine("_onChannelData exception ---------------- ");
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("[Error]: DAQ ERROR");
         Console.WriteLine(e);
+        Console.ResetColor();
         dataAcquisitionDevice.Disconnect();
         throw e;
       }
@@ -194,19 +188,14 @@ namespace MEAME2
 
 
     private void onError(String msg, int info){
+      Console.ForegroundColor = ConsoleColor.Red;
       Console.WriteLine(info);
       Console.WriteLine(msg);
-      Console.WriteLine("~~~~~~~~ Error! ~~~~~~~~~ :( ~~~~~~~~ )");
-      try {
-        dataAcquisitionDevice.StopDacq();
-        dataAcquisitionDevice.Dispose();
-      }
-      catch (Exception e)
-        {
-          Console.WriteLine("Got exception");
-          Console.WriteLine(e);
-          Console.WriteLine("Ignoring.. YOLO");
-        }
+      Console.WriteLine("[Error]: DAQ onError invoked");
+      Console.ResetColor();
+
+      dataAcquisitionDevice.StopDacq();
+      dataAcquisitionDevice.Dispose();
     }
   }
 }

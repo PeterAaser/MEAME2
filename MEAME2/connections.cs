@@ -49,23 +49,14 @@ namespace MEAME2
     //           int DESTINATION OFFSET IN BYTES,
     //           int BYTES TO COPY
     public void OnChannelData(Dictionary<int, int[]> data, int returnedFrames){
-      Console.WriteLine("cm on channel dataz");
 
-
-      if(throttle == 0){
-        // Console.WriteLine(totalChannels);
-      }
       throttle = (throttle + 1) % 100;
-
-
-
       byte[] sendBuffer = new byte[returnedFrames * 60 * 4];
       for (int ii = 0; ii < 60; ii++){
 
         int byteOffset = ii*returnedFrames*4;
 
         Buffer.BlockCopy(data[ii], 0, sendBuffer, byteOffset, returnedFrames*4);
-        // Buffer.BlockCopy(channelData, 0, sendBuffer, byteOffset, returnedFrames*4);
       }
 
 
@@ -82,6 +73,16 @@ namespace MEAME2
           allChannelListeners.RemoveAt(ii);
         }
       }
+    }
+
+    private void throttledPrint(String s){
+      if(throttle == 1000){
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"[CM Info]: {s}");
+        Console.ResetColor();
+        throttle = 0;
+      }
+      throttle++;
     }
   }
 }

@@ -31,7 +31,6 @@ namespace MEAME2
     private String[] devices;
 
     public MEAMEcontrol(){
-      Console.WriteLine("Creating new controller");
       this.daq = new DAQ();
       this.cm = new ConnectionManager();
       this.cm.daq = this.daq;
@@ -45,14 +44,10 @@ namespace MEAME2
     public string getDevicesDescription(){
       updateDeviceList();
       var message = new { Devices = devices };
-      Console.WriteLine("----------- Device description is ----------------");
-      Console.WriteLine(message);
-      Console.WriteLine("-----------");
       return JsonConvert.SerializeObject(message);
     }
 
     private void updateDeviceList(){
-      Console.WriteLine("Updating device list");
       usblist.Initialize(DeviceEnumNet.MCS_MEA_DEVICE);
       devices = new String[usblist.Count];
       for (uint ii = 0; ii < usblist.Count; ii++){
@@ -65,9 +60,7 @@ namespace MEAME2
 
 
     public bool startServer(){
-      Console.WriteLine("\nStarting server");
-      Console.WriteLine($"DAQconfigured: {DAQconfigured}");
-      Console.WriteLine($"DAQrunning: {DAQrunning}");
+
       var tmp = getDevicesDescription();
       try {
         if(this.DAQconfigured && !DAQrunning){
@@ -85,9 +78,6 @@ namespace MEAME2
         throw e;
         return false;
       }
-      Console.WriteLine("startServer returns 500");
-      Console.WriteLine($"daq configured was: {this.DAQconfigured}");
-      Console.WriteLine($"daq running was: {this.DAQrunning}");
       return false;
     }
 
@@ -116,10 +106,9 @@ namespace MEAME2
 
 
     public bool connectDAQ(DAQconfig d){
-      Console.WriteLine("\nConnection DAQ");
+
       this.updateDeviceList();
 
-      Console.WriteLine(this.devices);
       bool devicePresent = (devices.Any(p => p[p.Length - 1] == 'A'));
       if(devicePresent){
         try {
@@ -127,16 +116,9 @@ namespace MEAME2
           this.daq.segmentLength = d.segmentLength;
           this.daq.onChannelData = this.cm.OnChannelData;
           this.DAQconfigured = this.daq.connectDataAcquisitionDevice(0); // YOLO index arg
-          Console.WriteLine($"DAQ connected {this.DAQconfigured}");
-          this.DAQconfigured = true; // megaYOLO
-          Console.WriteLine(this.daq);
-          this.cm.channels = d.specialChannels;
+          this.DAQconfigured = true;
         }
         catch (Exception e) {
-          Console.WriteLine("---[ERROR]----");
-          Console.WriteLine("connectDAQ threw");
-          Console.WriteLine(e);
-          Console.WriteLine("---[ERROR]----");
           throw e;
         }
       }

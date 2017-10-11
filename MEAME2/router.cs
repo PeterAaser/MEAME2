@@ -29,7 +29,6 @@ namespace MEAME2
   public class MEAMEserver : NancyModule
   {
 
-
     public IMEAMEcontrol controller;
 
     public MEAMEserver(IMEAMEcontrol controller){
@@ -58,9 +57,8 @@ namespace MEAME2
 
 
     private dynamic hello(){
-      Console.WriteLine("\n---[Runnin Hello]---");
-      Console.WriteLine("Hello :DD");
-      Console.WriteLine("---[ Hello :) ]---");
+      consoleInfo("Http hello request");
+      consoleOK("Hello :D");
       return "Hello :D";
     }
 
@@ -88,31 +86,30 @@ namespace MEAME2
     // Requires a JSON in the body
     private dynamic connectDAQ(){
 
-      Console.WriteLine("\n---[Runnin connectDAQ]---");
-
-      string body = this.getJsonBody();
-      Console.WriteLine(body);
+      consoleInfo("Got request for DAQ connect");
 
       try {
+        string body = this.getJsonBody();
         StringReader memeReader = new StringReader(body);
         JsonTextReader memer = new JsonTextReader(memeReader);
         JsonSerializer serializer = new JsonSerializer();
         DAQconfig d = serializer.Deserialize<DAQconfig>(memer);
+        consoleInfo($"With parameters:");
+        consoleInfo($"samplerate:\t{d.samplerate}");
+        consoleInfo($"segment length:\t{d.segmentLength}");
 
         bool connect = controller.connectDAQ(d);
 
         if (connect){
-          Console.WriteLine("---[200]---");
+          consoleOK("DAQ connected");
           return 200;
         }
-        Console.WriteLine("---[ERROR: connectDAQ failed]---");
+        consoleError("Connecting to DAQ failed");
         return 500; // what if it's just a generic error? dunno lol use remmina...
       }
       catch (Exception e){ // should only catch deserialize error, dunno how xD
-        Console.WriteLine("malformed request");
-        Console.WriteLine("---[ERROR: Malformed request]---");
+        consoleError("malformed request");
         Console.WriteLine(e);
-        Console.WriteLine("---[ERROR: Malformed request]---");
         return 500;
       }
 
@@ -121,48 +118,50 @@ namespace MEAME2
 
 
     private dynamic startDAQ(){
-      Console.WriteLine("\n---[Runnin startDAQ]---");
+      consoleInfo("Got request for DAQ start");
 
       if (controller.startServer())
         {
-          Console.WriteLine("---[200]---");
+          consoleOK("DAQ server started");
           return 200;
         }
 
-      Console.WriteLine("---[ERROR: Something wrong with startServer]---");
+      consoleError("DAQ server failed to start");
       return 500;
     }
 
 
     private dynamic stopDAQ(){
-
-      Console.WriteLine("Runnin stopDAQ");
+      consoleInfo("Got request to stop DAQ");
 
       if (controller.stopServer())
         {
+          consoleOK("DAQ stopped");
           return 200;
         }
 
+      consoleError("Unable to stop DAQ signalled by DAQ stop return value");
       return 500;
     }
 
-    private dynamic something(dynamic parameters)
-    {
-      string jsonString = "{ username: \"admin\", password: \"just kidding\" }";
-      byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonString);
 
-      return new Response()
-        {
-          StatusCode = HttpStatusCode.OK,
-          ContentType = "application/json",
-          ReasonPhrase = "Because why not!",
-          Headers = new Dictionary<string, string>()
-          {
-            { "Content-Type", "application/json" },
-            { "X-Custom-Header", "Sup?" }
-          },
-          Contents = c => c.Write(jsonBytes, 0, jsonBytes.Length)
-        };
+
+    private void consoleError(String s){
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine($"[Error]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleInfo(String s){
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine($"[Info]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleOK(String s){
+      Console.ForegroundColor = ConsoleColor.Green;
+      Console.WriteLine($"[Info]: {s}\n\n");
+      Console.ResetColor();
     }
   }
 }
