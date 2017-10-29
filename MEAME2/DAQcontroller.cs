@@ -88,7 +88,7 @@ namespace MEAME2
 
       dataAcquisitionDevice.SetSelectedChannelsQueue
         (selectedChannels,
-         10*segmentLength,
+         120000, // huh?
          segmentLength,
          dataFormat,
          block/2);
@@ -102,14 +102,15 @@ namespace MEAME2
       int validDataBits = -1;
       int deviceDataFormat = -1;
 
-      //
-      // Summary:
-      //     Get the real number of data bits.
-      //
-      // Remarks:
-      //     This value may be different from the value returned by GetDataFormat, e.g. in
-      //     MC_Card the data are shifted 2 bits so the real number is 14 while the data format
-      //     is 16 bits
+      /**
+      Summary:
+          Get the real number of data bits.
+
+      Remarks:
+          This value may be different from the value returned by GetDataFormat, e.g. in
+          MC_Card the data are shifted 2 bits so the real number is 14 while the data format
+          is 16 bits
+      */
       dataAcquisitionDevice.GetNumberOfDataBits(0,
                                                 DacqGroupChannelEnumNet.HeadstageElectrodeGroup,
                                                 out validDataBits);
@@ -121,13 +122,15 @@ namespace MEAME2
       DataModeEnumNet dataMode = dataAcquisitionDevice.GetDataMode(0);
 
 
-      // Summary:
-      //     Get the number of 16 bit datawords which will be collected per sample frame,
-      //     use after the device is configured.
-      //
-      // Returns:
-      //     Number of 16 bit datawords per sample frame.
-      // Returns 132 (66 32 bit words???)
+      /**
+      Summary:
+         Get the number of 16 bit datawords which will be collected per sample frame,
+         use after the device is configured.
+
+      Returns:
+         Number of 16 bit datawords per sample frame.
+         Returns 132 (66 32 bit words???)
+      */
       int meme = dataAcquisitionDevice.GetChannelsInBlock();
 
       deviceInfo =

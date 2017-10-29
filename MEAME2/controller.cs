@@ -17,6 +17,9 @@ namespace MEAME2
     bool stopServer();
     bool connectDAQ(DAQconfig d);
     string getDevicesDescription();
+    bool testDSP();
+    bool setRegs(RegSetRequest r);
+    RegReadResponse readRegs(RegReadRequest r);
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -25,6 +28,7 @@ namespace MEAME2
     private ChannelServer     channelServer;
     private DAQ               daq;
     private CMcsUsbListNet    usblist;
+    private DSPComms          dsp;
     private bool              DAQconfigured;
     private bool              DAQrunning;
 
@@ -38,6 +42,7 @@ namespace MEAME2
       this.usblist = new CMcsUsbListNet();
       this.DAQconfigured = false;
       this.DAQrunning = false;
+      this.dsp = new DSPComms();
     }
 
 
@@ -91,16 +96,9 @@ namespace MEAME2
         }
       }
       catch (Exception e) {
-        Console.WriteLine("---[ERROR]----");
-        Console.WriteLine("stopServer threw");
-        Console.WriteLine(e);
-        Console.WriteLine("---[ERROR]----");
+        // uhh...
         throw e;
-        return false;
       }
-      Console.WriteLine("stopServer returns 500");
-      Console.WriteLine($"daq configured was: {this.DAQconfigured}");
-      Console.WriteLine($"daq running was: {this.DAQrunning}");
       return false;
     }
 
@@ -119,10 +117,52 @@ namespace MEAME2
           this.DAQconfigured = true;
         }
         catch (Exception e) {
+          // uhh...
           throw e;
         }
       }
       return devicePresent && this.DAQconfigured;
+    }
+
+
+    public bool initDSP(){
+      return this.dsp.uploadMeameBinary();
+    }
+
+
+    public bool testDSP(){
+      consoleInfo("Uploading MEAME binary");
+      initDSP();
+      return dsp.test();
+    }
+
+
+    public bool setRegs(RegSetRequest r){
+      return this.dsp.writeRegRequest(r);
+    }
+    public RegReadResponse readRegs(RegReadRequest r){
+      RegReadResponse resp = new RegReadResponse();
+      resp.values = this.dsp.readRegRequest(r);
+      return resp;
+    }
+
+
+    private void consoleError(String s){
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine($"[Error]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleInfo(String s){
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine($"[Info]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleOK(String s){
+      Console.ForegroundColor = ConsoleColor.Green;
+      Console.WriteLine($"[Info]: {s}\n\n");
+      Console.ResetColor();
     }
   }
 }

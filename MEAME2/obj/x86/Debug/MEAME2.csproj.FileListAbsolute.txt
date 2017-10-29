@@ -1,5 +1,3 @@
-C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.exe
-C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.pdb
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\MEAME2.exe
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\MEAME2.pdb
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\McsUsbNet.dll
@@ -11,4 +9,6 @@ C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Nancy.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Newtonsoft.Json.pdb
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Newtonsoft.Json.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Nancy.Hosting.Self.xml
+C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.exe
+C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.pdb
 C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.csprojResolveAssemblyReference.cache

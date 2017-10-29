@@ -14,7 +14,7 @@ namespace MEAME2
 
     private static string ipstring = "129.241.201.110";
     private ConnectionManager cm;
-    private static int allChannelsPort = 12340;
+    private static int ChannelsPort = 12340;
 
     public ChannelServer(ConnectionManager cm) {
       this.cm = cm;
@@ -23,13 +23,12 @@ namespace MEAME2
 
     public void startListener()
     {
-      Thread listener = new Thread( () => allChannelListener(cm) );
+      Thread listener = new Thread( () => ChannelListener(cm) );
 
       listener.Start();
     }
 
-
-    private static void allChannelListener(ConnectionManager cm) {
+    private static void ChannelListener(ConnectionManager cm) {
 
       IPAddress myip;
       IPAddress.TryParse(ipstring, out myip);
@@ -37,16 +36,16 @@ namespace MEAME2
                                    SocketType.Stream,
                                    ProtocolType.Tcp);
 
-      listener.Bind(new IPEndPoint(myip, allChannelsPort));
+      listener.Bind(new IPEndPoint(myip, ChannelsPort));
       listener.Listen(10);
 
       while (true){
         Socket connection = listener.Accept();
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"[TCP Info]: Connection to port {allChannelsPort} accepted");
+        Console.WriteLine($"[TCP Info]: Connection to port {ChannelsPort} accepted");
         Console.ResetColor();
 
-        cm.allChannelListeners.Add(connection);
+        cm.ChannelListeners.Add(connection);
       }
 
       listener.Close();

@@ -27,6 +27,8 @@ namespace MEAME2
     private bool DSPready = false;
     private uint readReqCounter = 0;
     private uint writeReqCounter = 0;
+
+
     Dictionary<uint, String> registers;
     Dictionary<uint, uint> registerValues;
 
@@ -107,162 +109,60 @@ namespace MEAME2
       uploadAndTest();
     }
 
-    public void writeReg(uint addr, uint val){
-      Thread.Sleep(300);
+    public bool writeReg(uint addr, uint val){
+      Thread.Sleep(500);
       if(dspDevice.Connect(dspPort, lockMask) == 0)
         {
           dspDevice.WriteRegister(addr, val);
           dspDevice.Disconnect();
+          Thread.Sleep(500);
+          return true;
         }
       else{
-        Console.WriteLine("Write failure");
+        consoleError("Write unable to connect to device");
+        return false;
       }
     }
 
     public uint readReg(uint addr){
-      Thread.Sleep(300);
+      Thread.Sleep(500);
       if(dspDevice.Connect(dspPort, lockMask) == 0)
         {
           uint rval = dspDevice.ReadRegister(addr);
           dspDevice.Disconnect();
+          Thread.Sleep(500);
           return rval;
         }
       else{
-        Console.WriteLine("read is Unable to connect to device");
+        consoleError("read is Unable to connect to device");
         return 0xDEAD;
       }
     }
 
+
+    // Lol no monads
     private bool uploadAndTest(){
 
-      Console.WriteLine("STARTING TESTS & UPLOAD --------\n\n");
-
+      consoleInfo("STARTING TESTS & UPLOAD");
 
       bool success = true;
-      Console.WriteLine("Trying to upload firmware");
+      consoleInfo("uploading DSP firmware");
       success = (success && uploadMeameBinary());
-      Console.WriteLine("----------------------\n\n");
 
-
-      Console.WriteLine("Running ping test");
-      success = (success && pingTest());
-      Console.WriteLine("----------------------\n\n");
-
-      Console.WriteLine("Running read test");
-      success = (success && readAddressTest());
-      Console.WriteLine("----------------------\n\n");
-
+      success = (success && test());
       return success;
     }
 
 
-    public void readAllRegisters(){
-      foreach(var entry in registers){
-        // readRegister(entry.Key);
-      }
-    }
-
-
-    // public bool readRegister(uint address){
-    //   if(DSPready){
-    //     DSPready = false;
-    //     readReqCounter++;
-
-    //     writeReg(READ_ADDRESS, address);
-    //     writeReg(READ_REQ_ID, readReqCounter);
-
-    //     bool done = false;
-    //     for(int attempts = 0; attempts < 5; attempts++){
-    //       uint ack = readReg(READ_ACK_ID);
-    //       if(ack == readReqCounter){
-    //         done = true;
-    //         Console.WriteLine("Read Success");
-    //         break;
-    //       }
-    //       else{
-    //         Console.WriteLine("\nFailed to read, trying again");
-    //         barfDebug();
-    //       }
-    //     }
-    //     if(done){
-    //       registerValues[address] = readReg(READ_VALUE);
-    //     }
-    //     else{
-    //       Console.WriteLine("Failed to read register :(");
-    //       return false;
-    //     }
-    //   }
-
-    //   DSPready = true;
-    //   return true;
-    // }
-    // else{
-    //   Console.WriteLine("DSP not ready!!!!");
-    //   return false;
-    // }
-
-
-    // public void writeRegister(uint address, uint value){
-    //   if(DSPready){
-    //     DSPready = false;
-    //     writeReqCounter++;
-
-    //     writeReg(WRITE_ADDRESS, address);
-    //     writeReg(WRITE_VALUE, value);
-    //     writeReg(WRITE_REQ_ID, writeReqCounter);
-    //     bool done = false;
-    //     for(int attempts = 0; attempts < 5; attempts++){
-    //       if(readReg(READ_ACK_ID) == writeReqCounter){
-    //         done = true;
-    //         Console.WriteLine("Write Success");
-    //         break;
-    //       }
-    //       else{
-    //         Console.WriteLine("Failed to write, trying again");
-    //       }
-    //     }
-    //     if(done){
-    //       if(registers.ContainsKey(address)){
-    //         registerValues[address] = value;
-    //       }
-    //     }
-    //     else{
-    //       Console.WriteLine("Failed to write register :(");
-    //     }
-    //   }
-    //   else{
-    //     Console.WriteLine("dsp not ready");
-    //   }
-
-    //   DSPready = true;
-    // }
-
-
-    public String prettyRegister(uint address){
-      String desc = registers[address];
-      uint value = registerValues[address];
-      String valString = String.Format("[{0}]", value);
-      String addString = String.Format("[{0:X}]", address);
-      String hexString = String.Format("[{0:X}]", value);
-
-      return String.Format("{0, -10}{1, -10}0x{2, -10}{3}", addString, valString, hexString, desc);
-    }
-
-
-    public void generateReport(){
-      String header = String.Format("\n{0, -10}{1, -10}{2, -12}DESCRIPTION\n", "ADDRESS", "VALUE", "HEX VALUE");
-      Console.WriteLine(header);
-      if(registers == null){
-        Console.WriteLine("oh boy it's another null...");
-      }
-      foreach(var entry in registers){
-        Console.WriteLine(prettyRegister(entry.Key));
-      }
+    // Lol no monads
+    public bool test(){
+      return pingTest();
     }
 
 
     public bool pingTest(){
-      Console.WriteLine("TESTING BASIC READ AND WRITE CONNECTIVITY");
+      Thread.Sleep(200);
+      consoleInfo("\n\nTesting basic read and write connectivity");
       Random rnd = new Random();
       uint rval1 = 0x123 + (uint)(rnd.Next(1,10));
       uint rval2 = 0x123 + (uint)(rnd.Next(1,10));
@@ -274,6 +174,8 @@ namespace MEAME2
       uint cnt3;
       uint cnt4;
 
+      consoleInfo("Writing to DEBUG1 through DEBUG4");
+
       writeReg(DEBUG1, rval1);
       cnt1 = readReg(COUNTER);
       writeReg(DEBUG2, rval2);
@@ -283,91 +185,80 @@ namespace MEAME2
       writeReg(DEBUG4, rval4);
       cnt4 = readReg(COUNTER);
 
+      consoleInfo($"DEBUG1 set to {rval1:X}");
+      consoleInfo($"DEBUG2 set to {rval2:X}");
+      consoleInfo($"DEBUG3 set to {rval3:X}");
+      consoleInfo($"DEBUG4 set to {rval4:X}");
+
       uint test1 = readReg(DEBUG1);
       uint test2 = readReg(DEBUG2);
       uint test3 = readReg(DEBUG3);
       uint test4 = readReg(DEBUG4);
 
+      consoleInfo($"Reading DEBUG1 through DEBUG4");
+
+      consoleInfo($"DEBUG1 read as {test1:X}");
+      consoleInfo($"DEBUG2 read as {test2:X}");
+      consoleInfo($"DEBUG3 read as {test3:X}");
+      consoleInfo($"DEBUG4 read as {test4:X}");
 
       if((test1 == rval1) && (test2 == rval2) && (test3 == rval3) && (test4 == rval4)){
-        Console.WriteLine("Ping test success");
-        return true;
+        consoleOK("R/W test successful");
       }
       else{
-        Console.WriteLine("!!!! Ping test failed, device is broken again !!!!");
-        Console.WriteLine("This is what they call german \"\"\"engineering\"\"\"");
-        Console.WriteLine("Here's some data");
-        Console.WriteLine(test1);
-        Console.WriteLine(test2);
-        Console.WriteLine(test3);
-        Console.WriteLine(test4);
-
-        Console.WriteLine(cnt1);
-        Console.WriteLine(cnt2);
-        Console.WriteLine(cnt3);
-        Console.WriteLine(cnt4);
-        dspDevice.Disconnect();
+        consoleError("!!!! Ping test failed, device is broken again !!!!");
+        consoleError("This is what they call german \"\"\"engineering\"\"\"");
         return false;
       }
 
 
-      Console.WriteLine("\nTESTING BASIC INTERRUPT HANDLING");
+      consoleInfo("\n\nTESTING BASIC INTERRUPT HANDLING");
       uint pingTest1 = 0x1234 + (uint)(rnd.Next(1, 100));
       uint pingTest2 = 0x1234 + (uint)(rnd.Next(1, 100));
       uint pingTest3 = 0x1234 + (uint)(rnd.Next(1, 100));
       uint pingTest4 = 0x1234 + (uint)(rnd.Next(1, 100));
 
+
+      consoleInfo($"Writing {pingTest1} to PING_SEND");
       writeReg(PING_SEND, pingTest1);
       uint pingRecv1 = readReg(PING_READ);
+      if(pingRecv1 == pingTest1){ consoleOK($"PING_SEND contained {pingTest1:X} as expected"); }
+      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv1:X}"); }
 
+      consoleInfo($"Writing {pingTest1} to PING_SEND");
       writeReg(PING_SEND, pingTest2);
       uint pingRecv2 = readReg(PING_READ);
+      if(pingRecv2 == pingTest2){ consoleOK($"PING_SEND contained {pingTest2:X} as expected"); }
+      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv2:X}"); }
 
+      consoleInfo($"Writing {pingTest1} to PING_SEND");
       writeReg(PING_SEND, pingTest3);
       uint pingRecv3 = readReg(PING_READ);
+      if(pingRecv3 == pingTest3){ consoleOK($"PING_SEND contained {pingTest3:X} as expected"); }
+      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv3:X}"); }
 
+      consoleInfo($"Writing {pingTest1} to PING_SEND");
       writeReg(PING_SEND, pingTest4);
       uint pingRecv4 = readReg(PING_READ);
+      if(pingRecv4 == pingTest4){ consoleOK($"PING_SEND contained {pingTest4:X} as expected"); }
+      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv4:X}"); }
 
       if(
          (pingTest1 == pingRecv1) &&
          (pingTest2 == pingRecv2) &&
          (pingTest3 == pingRecv3) &&
          (pingTest4 == pingRecv4))
-
         {
-          Console.WriteLine("Basic interrupting working");
+          consoleOK("Basic interrupting working");
+          return true;
         } else
         {
-          Console.WriteLine("!!!! Interrupt handler test error !!!!");
-          Console.WriteLine("This is what they call german \"\"\"engineering\"\"\"");
-          Console.WriteLine("Here's some data");
-
-          Console.WriteLine($"send: 0x{pingTest1:X}, read: 0x{pingRecv1:X}");
-          Console.WriteLine($"send: 0x{pingTest2:X}, read: 0x{pingRecv2:X}");
-          Console.WriteLine($"send: 0x{pingTest3:X}, read: 0x{pingRecv3:X}");
-          Console.WriteLine($"send: 0x{pingTest4:X}, read: 0x{pingRecv4:X}");
+          consoleError("!!!! Interrupt handler test error !!!!");
+          consoleError("This is what they call german \"\"\"engineering\"\"\"");
           return false;
         }
     }
 
-
-    public bool readAddressTest(){
-      uint fail = readReg(READ_VALUE);
-      writeReg(READ_ADDRESS, DEBUG1);
-      writeReg(READ_REQ_ID, 0x12);
-      uint fug = readReg(DEBUG1);
-      uint ads = readReg(DEBUG2);
-      uint mem = readReg(READ_ACK_ID);
-      uint mem2 = readReg(READ_VALUE);
-
-      Console.WriteLine($"DEBUG1: 0x{fug:X}, DEBUG2: 0x{ads:X}, READ_ACK_ID: 0x{mem:X}, READ_VALUE: 0x{mem2:X}");
-      Console.WriteLine($"old READ_VALUE: 0x{fail:X}");
-      Console.WriteLine("Proceeding...");
-
-      barfDebug();
-      return true;
-    }
 
 
     public void barfDebug(){
@@ -383,17 +274,22 @@ namespace MEAME2
     }
 
 
-    public bool connectivityTest(){
-      if(dspDevice.Connect(dspPort, lockMask) == 0)
-        {
-          Console.WriteLine("Connect to device test successful");
-          dspDevice.Disconnect();
-          return true;
-        }
-      else{
-        Console.WriteLine("write is unable to connect to device");
-        return false;
-      }
+    private void consoleError(String s){
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine($"[DSP Error]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleInfo(String s){
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine($"[DSP Info]: {s}");
+      Console.ResetColor();
+    }
+
+    private void consoleOK(String s){
+      Console.ForegroundColor = ConsoleColor.Green;
+      Console.WriteLine($"[DSP Info]: {s}\n\n");
+      Console.ResetColor();
     }
   }
 }
