@@ -15,6 +15,8 @@ namespace MEAME2
     public SampleSizeNet dataFormat { get; set; }
     public Action<Dictionary<int, int[]>, int> onChannelData { get; set; }
 
+    private int barfCounter = 0;
+
     public override String ToString(){
       return deviceInfo;
     }
@@ -86,12 +88,19 @@ namespace MEAME2
       for (int i = 0; i < block; i++){ selectedChannels[i] = true; } // hurr
 
 
+      // *org [[file:killme.cs::/%20a%20device%20are%20read%20in%2032%20bit%20data%20format%20nChannels%20=%20ChannelsInBlock/2][documentation]]
+      bool[] nChannels         = selectedChannels;
+      int queueSize            = 120000;
+      int threshold            = segmentLength;
+      SampleSizeNet sampleSize = dataFormat;
+      int ChannelsInBlock      = block/2;
+
       dataAcquisitionDevice.SetSelectedChannelsQueue
-        (selectedChannels,
-         120000, // huh?
-         segmentLength,
-         dataFormat,
-         block/2);
+        (nChannels,
+         queueSize, // huh?
+         threshold,
+         sampleSize,
+         ChannelsInBlock);
 
       mChannelHandles = block;
 
@@ -135,26 +144,32 @@ namespace MEAME2
 
       deviceInfo =
         "Data acquisition device connected to physical device with parameters: \n" +
-        $"number of blocks: {block}\n" +
-        $"sample rate: {samplerate}\n" +
-        $"Voltage range: {voltageranges[0].VoltageRangeDisplayStringMilliVolt}\n" +
-        $"Corresponding to {voltageranges[0].VoltageRangeInMicroVolt} µV\n" +
-        "--- channel layout ---\n" +
-        $"hardware channels: {hwchannels}\n" +           // 64
-        $"analog channels: {ana}\n" +                    // 128
-        $"digital channels: {digi}\n" +                  // 2
-        $"che(??) channels: {che}\n" +                   // 4
-        $"tim(??) channels: {tim}\n" +
-        "---\n" +
-        $"valid data bits: {validDataBits}\n" +          // 24
-        $"device data format: {deviceDataFormat}\n" +    // 32
-        $"device data mode: {dataMode}\n" +              // dmSigned24bit
-        $"nice meme: {meme}\n" +
+        $"[SetSelectedChannelsQueue arguments:]\n" +
+        $"nChannels           \t{selectedChannels}\n" +
+        $"queueSize:          \t{queueSize}\n" +
+        $"threshold:          \t{threshold}\n" +
+        $"samplesize:         \t{sampleSize}\n" +
+        $"channelsInBlock:    \t{ChannelsInBlock}\n\n" +
+        $"[Experiment params]\n" +
+        $"sample rate:        \t{samplerate}\n" +
+        $"Voltage range:      \t{voltageranges[0].VoltageRangeDisplayStringMilliVolt}\n" +
+        $"Corresponding to    \t{voltageranges[0].VoltageRangeInMicroVolt} µV\n" +
+        $"[Device channel layout]\n\n" +
+        $"hardware channels:  \t{hwchannels}\n" +       // 64
+        $"analog channels:    \t{ana}\n" +              // 128
+        $"digital channels:   \t{digi}\n" +             // 2
+        $"che(??) channels:   \t{che}\n" +              // 4
+        $"tim(??) channels:   \t{tim}\n\n" +
+        $"[Other..]\n" +
+        $"valid data bits:    \t{validDataBits}\n" +    // 24
+        $"device data format: \t{deviceDataFormat}\n" + // 32
+        $"device data mode:   \t{dataMode}\n" +         // dmSigned24bit
+        $"nice meme:          \t{meme}\n" +
         "";
 
       return true;
-
     }
+
 
     private void _onChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples){
       try {
@@ -177,13 +192,22 @@ namespace MEAME2
            segmentLength,
            out returnedFrames);
 
+        if(barfCounter < 3000){
+          if(barfCounter == 2999){
+            log.info($"totalChannels:  {totalChannels}", "DAQ DEBUG");
+            log.info($"offset:         {totalChannels}", "DAQ DEBUG");
+            log.info($"channels:       {totalChannels}", "DAQ DEBUG");
+            log.info($"returnedFrames: {totalChannels}", "DAQ DEBUG");
+          }
+          barfCounter++;
+        }
+
         onChannelData(data, returnedFrames);
       }
       catch (Exception e){
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("[Error]: DAQ ERROR");
+        log.err("DAQ ERROR", "DAQ ");
         Console.WriteLine(e);
-        Console.ResetColor();
         dataAcquisitionDevice.Disconnect();
         throw e;
       }
@@ -192,10 +216,9 @@ namespace MEAME2
 
     private void onError(String msg, int info){
       Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine(info);
-      Console.WriteLine(msg);
-      Console.WriteLine("[Error]: DAQ onError invoked");
-      Console.ResetColor();
+      log.err("DAQ on error invoked :(", "DAQ ");
+      // Console.WriteLine(info);
+      // Console.WriteLine(msg);
 
       dataAcquisitionDevice.StopDacq();
       dataAcquisitionDevice.Dispose();

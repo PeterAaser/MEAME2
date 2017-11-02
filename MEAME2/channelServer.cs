@@ -15,6 +15,7 @@ namespace MEAME2
     private static string ipstring = "129.241.201.110";
     private ConnectionManager cm;
     private static int ChannelsPort = 12340;
+    private static int SawToothPort = 12341;
 
     public ChannelServer(ConnectionManager cm) {
       this.cm = cm;
@@ -24,8 +25,10 @@ namespace MEAME2
     public void startListener()
     {
       Thread listener = new Thread( () => ChannelListener(cm) );
-
+      Thread listener2 = new Thread( () => SawToothListener(cm) );
       listener.Start();
+      listener2.Start();
+
     }
 
     private static void ChannelListener(ConnectionManager cm) {
@@ -41,11 +44,32 @@ namespace MEAME2
 
       while (true){
         Socket connection = listener.Accept();
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"[TCP Info]: Connection to port {ChannelsPort} accepted");
-        Console.ResetColor();
+        log.ok($"Connection to port {ChannelsPort} accepted", "TCP ");
 
         cm.ChannelListeners.Add(connection);
+      }
+
+      listener.Close();
+      return;
+    }
+
+
+    private static void SawToothListener(ConnectionManager cm) {
+
+      IPAddress myip;
+      IPAddress.TryParse(ipstring, out myip);
+      Socket listener = new Socket(AddressFamily.InterNetwork,
+                                   SocketType.Stream,
+                                   ProtocolType.Tcp);
+
+      listener.Bind(new IPEndPoint(myip, SawToothPort));
+      listener.Listen(10);
+
+      while (true){
+        Socket connection = listener.Accept();
+        log.ok($"Connection to port {SawToothPort} accepted", "TCP ");
+
+        cm.SawToothListeners.Add(connection);
       }
 
       listener.Close();

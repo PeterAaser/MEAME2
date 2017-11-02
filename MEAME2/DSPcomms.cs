@@ -116,7 +116,7 @@ namespace MEAME2
       uploadBinary(FirmwareFile);
       this.meameBinaryUploaded = true;
 
-      Thread.Sleep(400);
+      Thread.Sleep(100);
 
       return this.pingTest();
     }

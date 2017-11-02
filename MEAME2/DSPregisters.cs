@@ -59,6 +59,8 @@ namespace MEAME2
     static uint PING_SEND       = (MAIL_BASE + 0x58);
     static uint PING_READ       = (MAIL_BASE + 0x5c);
 
+    static uint CLEAR           = (MAIL_BASE + 0x60);
+
     static uint STIM_BASE = 0x9000;
     static uint TRIGGER_CTRL_BASE  = 0x0200;
 
@@ -115,7 +117,7 @@ namespace MEAME2
         {
           dspDevice.WriteRegister(addr, val);
           dspDevice.Disconnect();
-          Thread.Sleep(500);
+          // Thread.Sleep(500);
           return true;
         }
       else{
@@ -130,7 +132,7 @@ namespace MEAME2
         {
           uint rval = dspDevice.ReadRegister(addr);
           dspDevice.Disconnect();
-          Thread.Sleep(500);
+          // Thread.Sleep(500);
           return rval;
         }
       else{
@@ -161,8 +163,9 @@ namespace MEAME2
 
 
     public bool pingTest(){
-      Thread.Sleep(200);
+      // Thread.Sleep(200);
       consoleInfo("\n\nTesting basic read and write connectivity");
+      // writeReg(CLEAR, 0x0);
       Random rnd = new Random();
       uint rval1 = 0x123 + (uint)(rnd.Next(1,10));
       uint rval2 = 0x123 + (uint)(rnd.Next(1,10));
@@ -207,7 +210,6 @@ namespace MEAME2
       }
       else{
         consoleError("!!!! Ping test failed, device is broken again !!!!");
-        consoleError("This is what they call german \"\"\"engineering\"\"\"");
         return false;
       }
 
@@ -219,29 +221,29 @@ namespace MEAME2
       uint pingTest4 = 0x1234 + (uint)(rnd.Next(1, 100));
 
 
-      consoleInfo($"Writing {pingTest1} to PING_SEND");
+      consoleInfo($"Writing {pingTest1:X} to PING_SEND");
       writeReg(PING_SEND, pingTest1);
       uint pingRecv1 = readReg(PING_READ);
-      if(pingRecv1 == pingTest1){ consoleOK($"PING_SEND contained {pingTest1:X} as expected"); }
-      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv1:X}"); }
+      if(pingRecv1 == pingTest1){ consoleOK($"PING_READ contained {pingTest1:X} as expected"); }
+      else{ consoleError($"PING_READ contained unexpected value: {pingRecv1:X}"); }
 
-      consoleInfo($"Writing {pingTest1} to PING_SEND");
+      consoleInfo($"Writing {pingTest2:X} to PING_SEND");
       writeReg(PING_SEND, pingTest2);
       uint pingRecv2 = readReg(PING_READ);
-      if(pingRecv2 == pingTest2){ consoleOK($"PING_SEND contained {pingTest2:X} as expected"); }
-      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv2:X}"); }
+      if(pingRecv2 == pingTest2){ consoleOK($"PING_READ contained {pingTest2:X} as expected"); }
+      else{ consoleError($"PING_READ contained unexpected value: {pingRecv2:X}"); }
 
-      consoleInfo($"Writing {pingTest1} to PING_SEND");
+      consoleInfo($"Writing {pingTest3:X} to PING_SEND");
       writeReg(PING_SEND, pingTest3);
       uint pingRecv3 = readReg(PING_READ);
-      if(pingRecv3 == pingTest3){ consoleOK($"PING_SEND contained {pingTest3:X} as expected"); }
-      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv3:X}"); }
+      if(pingRecv3 == pingTest3){ consoleOK($"PING_READ contained {pingTest3:X} as expected"); }
+      else{ consoleError($"PING_READ contained unexpected value: {pingRecv3:X}"); }
 
-      consoleInfo($"Writing {pingTest1} to PING_SEND");
+      consoleInfo($"Writing {pingTest4:X} to PING_SEND");
       writeReg(PING_SEND, pingTest4);
       uint pingRecv4 = readReg(PING_READ);
-      if(pingRecv4 == pingTest4){ consoleOK($"PING_SEND contained {pingTest4:X} as expected"); }
-      else{ consoleError($"PING_SEND contained unexpected value: {pingRecv4:X}"); }
+      if(pingRecv4 == pingTest4){ consoleOK($"PING_READ contained {pingTest4:X} as expected"); }
+      else{ consoleError($"PING_READ contained unexpected value: {pingRecv4:X}"); }
 
       if(
          (pingTest1 == pingRecv1) &&
@@ -254,7 +256,6 @@ namespace MEAME2
         } else
         {
           consoleError("!!!! Interrupt handler test error !!!!");
-          consoleError("This is what they call german \"\"\"engineering\"\"\"");
           return false;
         }
     }
@@ -288,7 +289,7 @@ namespace MEAME2
 
     private void consoleOK(String s){
       Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[DSP Info]: {s}\n\n");
+      Console.WriteLine($"[DSP Info]: {s}");
       Console.ResetColor();
     }
   }

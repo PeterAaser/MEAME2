@@ -76,10 +76,8 @@ namespace MEAME2
         }
       }
       catch (Exception e) {
-        Console.WriteLine("---[ERROR]----");
-        Console.WriteLine("startServer threw");
+        log.err("startServer exception");
         Console.WriteLine(e);
-        Console.WriteLine("---[ERROR]----");
         throw e;
         return false;
       }
@@ -115,6 +113,8 @@ namespace MEAME2
           this.daq.onChannelData = this.cm.OnChannelData;
           this.DAQconfigured = this.daq.connectDataAcquisitionDevice(0); // YOLO index arg
           this.DAQconfigured = true;
+
+          log.info(this.daq.ToString());
         }
         catch (Exception e) {
           // uhh...

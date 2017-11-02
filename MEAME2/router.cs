@@ -63,8 +63,8 @@ namespace MEAME2
 
 
     private dynamic hello(){
-      consoleInfo("Http hello request");
-      consoleOK("Hello :D");
+      log.info("Http hello request");
+      log.ok("Hello :D");
       return "Hello :D";
     }
 
@@ -98,7 +98,7 @@ namespace MEAME2
     // Requires a JSON in the body
     private dynamic connectDAQ(){
 
-      consoleInfo("Got request for DAQ connect");
+      log.info("Got request for DAQ connect");
 
       try {
         string body = this.getJsonBody();
@@ -106,21 +106,21 @@ namespace MEAME2
         JsonTextReader memer = new JsonTextReader(memeReader);
         JsonSerializer serializer = new JsonSerializer();
         DAQconfig d = serializer.Deserialize<DAQconfig>(memer);
-        consoleInfo($"With parameters:");
-        consoleInfo($"samplerate:\t{d.samplerate}");
-        consoleInfo($"segment length:\t{d.segmentLength}");
+        log.info($"With parameters:");
+        log.info($"samplerate:\t{d.samplerate}");
+        log.info($"segment length:\t{d.segmentLength}");
 
         bool connect = controller.connectDAQ(d);
 
         if (connect){
-          consoleOK("DAQ connected");
+          log.ok("DAQ connected");
           return 200;
         }
-        consoleError("Connecting to DAQ failed");
+        log.err("Connecting to DAQ failed");
         return 500; // what if it's just a generic error? dunno lol use remmina...
       }
       catch (Exception e){ // should only catch deserialize error, dunno how xD
-        consoleError("malformed request");
+        log.err("malformed request");
         Console.WriteLine(e);
         return 500;
       }
@@ -130,35 +130,35 @@ namespace MEAME2
 
 
     private dynamic startDAQ(){
-      consoleInfo("Got request for DAQ start");
+      log.info("Got request for DAQ start");
 
       if (controller.startServer())
         {
-          consoleOK("DAQ server started");
+          log.ok("DAQ server started");
           return 200;
         }
 
-      consoleError("DAQ server failed to start");
+      log.err("DAQ server failed to start");
       return 500;
     }
 
 
     private dynamic stopDAQ(){
-      consoleInfo("Got request to stop DAQ");
+      log.info("Got request to stop DAQ");
 
       if (controller.stopServer())
         {
-          consoleOK("DAQ stopped");
+          log.ok("DAQ stopped");
           return 200;
         }
 
-      consoleError("Unable to stop DAQ signalled by DAQ stop return value");
+      log.err("Unable to stop DAQ signalled by DAQ stop return value");
       return 500;
     }
 
 
     private dynamic setRegs(){
-      consoleInfo("Got request for setting DSP registers");
+      log.info("Got request for setting DSP registers");
       try {
         string body = this.getJsonBody();
         StringReader memeReader = new StringReader(body);
@@ -167,27 +167,27 @@ namespace MEAME2
         RegSetRequest r = serializer.Deserialize<RegSetRequest>(memer);
 
         if(r.desc == String.Empty)
-          consoleInfo($"Got register set request with no description");
+          log.info($"Got register set request with no description");
         else
-          consoleInfo($"Got register set request with description: {r.desc}");
+          log.info($"Got register set request with description: {r.desc}");
 
-        consoleInfo($"Setting registers:");
-        consoleError($"WARNING: SET REGS IS CURRENTLY SET TO NO-OP");
-        consoleInfo(r.ToString());
+        log.info($"Setting registers:");
+        log.err($"WARNING: SET REGS IS CURRENTLY SET TO NO-OP");
+        log.info(r.ToString());
         // var hur = controller.setRegs(r);
       }
       catch (Exception e){
-        consoleError("set regs malformed request");
+        log.err("set regs malformed request");
         Console.WriteLine(e);
         return 500;
       }
-      consoleOK("Registers have been set");
+      log.ok("Registers have been set");
       return 200;
     }
 
 
     private dynamic readRegs(){
-      consoleInfo("Got request for reading DSP registers");
+      log.info("Got request for reading DSP registers");
       try {
         string body = this.getJsonBody();
         StringReader memeReader = new StringReader(body);
@@ -197,15 +197,15 @@ namespace MEAME2
         RegReadResponse resp = controller.readRegs(r);
 
         if(r.desc == String.Empty)
-          consoleInfo($"Got register read request with no description");
+          log.info($"Got register read request with no description");
         else
-          consoleInfo($"Got register read request with description: {r.desc}");
+          log.info($"Got register read request with description: {r.desc}");
 
-        consoleInfo($"Reading registers:");
-        consoleInfo(r.ToString());
+        log.info($"Reading registers:");
+        log.info(r.ToString());
 
-        consoleInfo($"Returning values:");
-        consoleInfo(resp.ToString());
+        log.info($"Returning values:");
+        log.info(resp.ToString());
         string output = JsonConvert.SerializeObject(resp);
         var hurr = Encoding.UTF8.GetBytes(output);
 
@@ -216,44 +216,25 @@ namespace MEAME2
         };
       }
       catch (Exception e){
-        consoleError("read regs malformed request");
+        log.err("read regs malformed request");
         Console.WriteLine(e);
         return 500;
       }
-      consoleOK("Registers read successful");
+      log.ok("Registers read successful");
       return 200;
     }
 
 
     private dynamic testRegs(){
-      consoleInfo("Get request for testing DSP registers");
+      log.info("Get request for testing DSP registers");
       if(controller.testDSP()){
-        consoleOK("DSP Reg test successful");
+        log.ok("DSP Reg test successful");
         return 200;
       }
       else{
-        consoleError("DSP Reg test failed");
+        log.err("DSP Reg test failed");
         return 500;
       }
-    }
-
-
-    private void consoleError(String s){
-      Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine($"[Error]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleInfo(String s){
-      Console.ForegroundColor = ConsoleColor.Yellow;
-      Console.WriteLine($"[Info]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleOK(String s){
-      Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[Info]: {s}\n\n");
-      Console.ResetColor();
     }
 
     private void consoleMsg(String s){
