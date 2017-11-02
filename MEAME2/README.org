@@ -1,0 +1,44 @@
+* README(ME)
+  MEAME2 exposes a HTTP interface for interacting with the MEA2100 lab equipment
+  (the links doesn't work in githubs .org rendering engine, but if you view the
+  readme in an org capable editor such as emacs the links work (on my machine))
+
+** API
+   Rather than listing the API here, you should take a look at the router file
+   [[file:router.cs::Get%5B"/status"%5D%20=%20_%20=>%20this.hello();][router.cs]].
+
+   The POST methods require a JSON body in the HTTP request. By reading the source
+   you should be able to discern what sort of object is expected. For instance the
+   connectDAQ procedure attempts to deserialize the body to a DAQconfig object as 
+   seen here: [[file:router.cs::DAQconfig%20d%20=%20serializer.Deserialize<DAQconfig>(memer);][Attempt to deserialize]]
+   The "blueprints" for the config JSONs are found in Commands.cs, for instance the
+   DAQconfig object is here: [[file:Commands.cs::public%20class%20DAQconfig%20{][DAQconfig object]].
+   
+   This corresponds to a JSON looking something like
+   #+BEGIN_SRC javascript
+{
+  "samplerate": 1000,
+  "segmentLength": 100
+}
+   #+END_SRC
+   
+   The samplerate is obvious, the segmentLength less so. 
+   When you send a HTTP POST with the JSON object shown above MEAME will listen for
+   an incoming TCP connection on port 12340. Since there is only one port for 60
+   channels the data must be multiplexed. A segment length of 100 means that the TCP
+   stream will be segmented, the first 100 integers (400 bytes) will be data for 
+   0, the next 100 ints for channel 1 and so forth.
+   
+   In order to make the deserialization easier there is a second port that outputs
+   sawtooth waves. By listening on port 12341 you will get sawtooth waves in the same
+   format specified in the JSON POST which you can use to verify the correctness of
+   your deserialization logic.
+   
+** Inner workings
+   The router calls methods from the controller class. The controller interfaces with
+   three objects: The DAQ module (DAta acQuisition), the DSP module and the TCP module.
+   The TCP module listens for incoming TCP connections (TCP is for the data stream,
+   don't confuce TCP and HTTP) and feeds data to listening channels. Relevant files
+   are connections.cs and channelServer.cs
+
+   No documentation is provided for the DSP and DAQ module, enter at your own peril.
