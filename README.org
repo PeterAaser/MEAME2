@@ -3,14 +3,14 @@
 
 ** API
    Rather than listing the API here, you should take a look at the router file
-   [[file:router.cs::Get%5B"/status"%5D%20=%20_%20=>%20this.hello();][router.cs]].
+   [[file:MEAME2/router.cs::Get%5B"/status"%5D%20=%20_%20=>%20this.hello();][router.cs]].
 
    The POST methods require a JSON body in the HTTP request. By reading the source
    you should be able to discern what sort of object is expected. For instance the
    connectDAQ procedure attempts to deserialize the body to a DAQconfig object as 
-   seen here: [[file:router.cs::DAQconfig%20d%20=%20serializer.Deserialize<DAQconfig>(memer);][Attempt to deserialize]]
+   seen here: [[attempt to deserialize][Attempt to deserialize]]
    The "blueprints" for the config JSONs are found in Commands.cs, for instance the
-   DAQconfig object is here: [[file:Commands.cs::public%20class%20DAQconfig%20{][DAQconfig object]].
+   DAQconfig object is here: [[file:MEAME2/Commands.cs::public%20class%20DAQconfig%20{][DAQconfig object]] 
    
    This corresponds to a JSON looking something like
    #+BEGIN_SRC javascript
