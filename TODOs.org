@@ -6,27 +6,6 @@
 
 
 * Next time
-  Tests on DSP is fucktacular and no one on st.olavs are responding to reset requests xD
+  Implement get_master_idx, run tests
 
 * DSP
-  to write:
-  if DSP is ready
-  MEAME increment write REQ counter
-  MEAME writes Address
-  MEAME writes Data
-  MEAME writes Req counter
-  DSP is now in not ready status
-  MEAME polls DSP ACK
-  when DSP ACK = REQ we know our values have been written
-  MEAME sets DSP to ready
-  
-  to read:
-  if DSP is ready
-  MEAME increase read REQ counter
-  MEAME writes Address
-  MEAME writes REQ counter
-  DSP is now in not ready status
-  MEAME polls DSP ACK
-  DSP writes value to READ_DATA
-  DSP writes REQ to ACK
-  MEAME sets DSP to ready

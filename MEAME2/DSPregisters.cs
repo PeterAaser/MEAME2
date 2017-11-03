@@ -24,9 +24,15 @@ namespace MEAME2
 
   public partial class DSPComms {
 
+    enum DspOps : uint {READ=1, WRITE=2, DUMP=3, RESET=4};
+
     private bool DSPready = false;
     private uint readReqCounter = 0;
     private uint writeReqCounter = 0;
+
+    private uint instructionIndex = 0;
+    private uint instructionQsize = 10;
+    private uint wordsPerInstruction = 3;
 
 
     Dictionary<uint, String> registers;
@@ -61,8 +67,13 @@ namespace MEAME2
 
     static uint CLEAR           = (MAIL_BASE + 0x60);
 
+    static uint COMMS_BUFFER_MASTER_IDX = (MAIL_BASE + 0x64); // MEAME -> DSP
+    static uint COMMS_BUFFER_SLAVE_IDX  = (MAIL_BASE + 0x68); // DSP -> MEAME
+    static uint COMMS_BUFFER_START      = (MAIL_BASE + 0x6c);
+
     static uint STIM_BASE = 0x9000;
     static uint TRIGGER_CTRL_BASE  = 0x0200;
+
 
     public void init(){
       Console.WriteLine("running init");
@@ -111,186 +122,149 @@ namespace MEAME2
       uploadAndTest();
     }
 
-    public bool writeReg(uint addr, uint val){
-      Thread.Sleep(500);
+    private void nextCommsBuffer(){
+      if(instructionIndex == (instructionQsize - 1))
+        instructionIndex = 0;
+      else
+        instructionIndex++;
+
+      log.info($"instruction index is now {instructionIndex}");
+    }
+
+    public void resetMail(){
+      log.info("resetting mail");
       if(dspDevice.Connect(dspPort, lockMask) == 0)
         {
-          dspDevice.WriteRegister(addr, val);
+
+          nextCommsBuffer();
+
+          uint opTypeAddress = COMMS_BUFFER_START + (instructionIndex*wordsPerInstruction) + 0x0;
+          dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.RESET);
+
+          bool success = false;
+
+          for(int ii = 0; ii < 10; ii++){
+            if(dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX) == 0x0){
+              success = true;
+              instructionIndex = 0;
+              break;
+            }
+            Thread.Sleep(100);
+          }
+
+          if(success){
+            log.ok("successfully reset device mailbox");
+          }
+          else{
+            log.err("failed to reset device mailbox");
+          }
+
           dspDevice.Disconnect();
-          // Thread.Sleep(500);
-          return true;
+        }
+      else {
+        log.err("failed to connect to device");
+      }
+    }
+
+    public bool writeReg(uint addr, uint val){
+      if(dspDevice.Connect(dspPort, lockMask) == 0)
+        {
+
+          nextCommsBuffer();
+
+          uint opTypeAddress           = COMMS_BUFFER_START + ((4*instructionIndex)*wordsPerInstruction) + 0x0;
+          uint writeAddressAddress     = COMMS_BUFFER_START + ((4*instructionIndex)*wordsPerInstruction) + 0x4;
+          uint valueToBeWrittenAddress = COMMS_BUFFER_START + ((4*instructionIndex)*wordsPerInstruction) + 0x8;
+
+          // addr val
+          dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.WRITE);
+          dspDevice.WriteRegister(writeAddressAddress, addr);
+          dspDevice.WriteRegister(valueToBeWrittenAddress, val);
+          dspDevice.WriteRegister(COMMS_BUFFER_MASTER_IDX, instructionIndex);
+
+          var s = $"writing {(uint)DspOps.WRITE:X} to {opTypeAddress:X}\n" +
+            $"writing {addr:X} to {writeAddressAddress:X}\n" +
+            $"writing {val:X} to {valueToBeWrittenAddress:X}\n" +
+            $"writing {instructionIndex:X} to {COMMS_BUFFER_MASTER_IDX:X}";
+
+          log.info(s);
+
+          bool success = false; // me_irl
+          for(int ii = 0; ii < 10; ii++){
+            uint tmp = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
+            if(tmp == instructionIndex){
+              log.info($"the value of {tmp:X} was read from {COMMS_BUFFER_SLAVE_IDX:X} which matched {instructionIndex:X}");
+              success = true;
+              break;
+            }
+            Thread.Sleep(100);
+            log.info($"read the value {tmp:X} from {COMMS_BUFFER_SLAVE_IDX:X} which did not match {instructionIndex:X}");
+            tmp = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
+          }
+          dspDevice.Disconnect();
+          if(success){
+            log.ok($"successfully wrote {val:X} to {addr:X}");
+          }
+          else{
+            log.err("write failure");
+          }
+          return success;
         }
       else{
-        consoleError("Write unable to connect to device");
+        log.err("Write unable to connect to device");
         return false;
       }
     }
 
     public uint readReg(uint addr){
-      Thread.Sleep(500);
       if(dspDevice.Connect(dspPort, lockMask) == 0)
         {
-          uint rval = dspDevice.ReadRegister(addr);
+
+          nextCommsBuffer();
+
+          uint opTypeAddress       = COMMS_BUFFER_START + (instructionIndex*4*wordsPerInstruction) + 0x0;
+          uint readAddressAddress  = COMMS_BUFFER_START + (instructionIndex*4*wordsPerInstruction) + 0x4;
+          uint deviceResultAddress = readAddressAddress;
+
+          dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.READ);
+          dspDevice.WriteRegister(readAddressAddress, addr);
+          dspDevice.WriteRegister(COMMS_BUFFER_MASTER_IDX, instructionIndex);
+
+          var s = $"writing {(uint)DspOps.READ:X} to {opTypeAddress:X}\n" +
+            $"writing {addr:X} to {readAddressAddress:X}\n" +
+            $"writing instruction index {instructionIndex:X} to {COMMS_BUFFER_MASTER_IDX:X}";
+
+          log.info(s);
+
+          bool success = false; // me_irl
+          uint rval = 0xDEAD;
+
+          for(int ii = 0; ii < 10; ii++){
+            uint tmp = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
+            if(tmp == instructionIndex){
+              log.info($"the value of {tmp:X} was read from {COMMS_BUFFER_SLAVE_IDX:X} which matched {instructionIndex:X}");
+              success = true;
+              rval = dspDevice.ReadRegister(deviceResultAddress);
+              break;
+            }
+            log.info($"read the value {tmp:X} from {COMMS_BUFFER_SLAVE_IDX:X} which did not match {instructionIndex:X}");
+            Thread.Sleep(100);
+          }
           dspDevice.Disconnect();
-          // Thread.Sleep(500);
+          if(success){
+          log.ok($"successfully read {rval:X} from {addr:X}");
+          }
+          else{
+            log.err("read failure");
+          }
+
+          dspDevice.Disconnect();
           return rval;
         }
       else{
-        consoleError("read is Unable to connect to device");
+        log.err("read is Unable to connect to device");
         return 0xDEAD;
       }
-    }
-
-
-    // Lol no monads
-    private bool uploadAndTest(){
-
-      consoleInfo("STARTING TESTS & UPLOAD");
-
-      bool success = true;
-      consoleInfo("uploading DSP firmware");
-      success = (success && uploadMeameBinary());
-
-      success = (success && test());
-      return success;
-    }
-
-
-    // Lol no monads
-    public bool test(){
-      return pingTest();
-    }
-
-
-    public bool pingTest(){
-      // Thread.Sleep(200);
-      consoleInfo("\n\nTesting basic read and write connectivity");
-      // writeReg(CLEAR, 0x0);
-      Random rnd = new Random();
-      uint rval1 = 0x123 + (uint)(rnd.Next(1,10));
-      uint rval2 = 0x123 + (uint)(rnd.Next(1,10));
-      uint rval3 = 0x123 + (uint)(rnd.Next(1,10));
-      uint rval4 = 0x123 + (uint)(rnd.Next(1,10));
-
-      uint cnt1;
-      uint cnt2;
-      uint cnt3;
-      uint cnt4;
-
-      consoleInfo("Writing to DEBUG1 through DEBUG4");
-
-      writeReg(DEBUG1, rval1);
-      cnt1 = readReg(COUNTER);
-      writeReg(DEBUG2, rval2);
-      cnt2 = readReg(COUNTER);
-      writeReg(DEBUG3, rval3);
-      cnt3 = readReg(COUNTER);
-      writeReg(DEBUG4, rval4);
-      cnt4 = readReg(COUNTER);
-
-      consoleInfo($"DEBUG1 set to {rval1:X}");
-      consoleInfo($"DEBUG2 set to {rval2:X}");
-      consoleInfo($"DEBUG3 set to {rval3:X}");
-      consoleInfo($"DEBUG4 set to {rval4:X}");
-
-      uint test1 = readReg(DEBUG1);
-      uint test2 = readReg(DEBUG2);
-      uint test3 = readReg(DEBUG3);
-      uint test4 = readReg(DEBUG4);
-
-      consoleInfo($"Reading DEBUG1 through DEBUG4");
-
-      consoleInfo($"DEBUG1 read as {test1:X}");
-      consoleInfo($"DEBUG2 read as {test2:X}");
-      consoleInfo($"DEBUG3 read as {test3:X}");
-      consoleInfo($"DEBUG4 read as {test4:X}");
-
-      if((test1 == rval1) && (test2 == rval2) && (test3 == rval3) && (test4 == rval4)){
-        consoleOK("R/W test successful");
-      }
-      else{
-        consoleError("!!!! Ping test failed, device is broken again !!!!");
-        return false;
-      }
-
-
-      consoleInfo("\n\nTESTING BASIC INTERRUPT HANDLING");
-      uint pingTest1 = 0x1234 + (uint)(rnd.Next(1, 100));
-      uint pingTest2 = 0x1234 + (uint)(rnd.Next(1, 100));
-      uint pingTest3 = 0x1234 + (uint)(rnd.Next(1, 100));
-      uint pingTest4 = 0x1234 + (uint)(rnd.Next(1, 100));
-
-
-      consoleInfo($"Writing {pingTest1:X} to PING_SEND");
-      writeReg(PING_SEND, pingTest1);
-      uint pingRecv1 = readReg(PING_READ);
-      if(pingRecv1 == pingTest1){ consoleOK($"PING_READ contained {pingTest1:X} as expected"); }
-      else{ consoleError($"PING_READ contained unexpected value: {pingRecv1:X}"); }
-
-      consoleInfo($"Writing {pingTest2:X} to PING_SEND");
-      writeReg(PING_SEND, pingTest2);
-      uint pingRecv2 = readReg(PING_READ);
-      if(pingRecv2 == pingTest2){ consoleOK($"PING_READ contained {pingTest2:X} as expected"); }
-      else{ consoleError($"PING_READ contained unexpected value: {pingRecv2:X}"); }
-
-      consoleInfo($"Writing {pingTest3:X} to PING_SEND");
-      writeReg(PING_SEND, pingTest3);
-      uint pingRecv3 = readReg(PING_READ);
-      if(pingRecv3 == pingTest3){ consoleOK($"PING_READ contained {pingTest3:X} as expected"); }
-      else{ consoleError($"PING_READ contained unexpected value: {pingRecv3:X}"); }
-
-      consoleInfo($"Writing {pingTest4:X} to PING_SEND");
-      writeReg(PING_SEND, pingTest4);
-      uint pingRecv4 = readReg(PING_READ);
-      if(pingRecv4 == pingTest4){ consoleOK($"PING_READ contained {pingTest4:X} as expected"); }
-      else{ consoleError($"PING_READ contained unexpected value: {pingRecv4:X}"); }
-
-      if(
-         (pingTest1 == pingRecv1) &&
-         (pingTest2 == pingRecv2) &&
-         (pingTest3 == pingRecv3) &&
-         (pingTest4 == pingRecv4))
-        {
-          consoleOK("Basic interrupting working");
-          return true;
-        } else
-        {
-          consoleError("!!!! Interrupt handler test error !!!!");
-          return false;
-        }
-    }
-
-
-
-    public void barfDebug(){
-      for(int ii = 0; ii < 10; ii++){
-        uint addr = (uint)(DEBUG1 + ii*4);
-        uint val = readReg(addr);
-        Console.WriteLine($"DEBUG{ii+1} = {val}, - 0x{val:X}");
-      }
-      uint val_ = readReg(WRITTEN_ADDRESS);
-      Console.WriteLine($"WRITTEN = {val_}, - 0x{val_:X}");
-      val_ = readReg(COUNTER);
-      Console.WriteLine($"COUNTER = {val_}, - 0x{val_:X}");
-    }
-
-
-    private void consoleError(String s){
-      Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine($"[DSP Error]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleInfo(String s){
-      Console.ForegroundColor = ConsoleColor.Yellow;
-      Console.WriteLine($"[DSP Info]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleOK(String s){
-      Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[DSP Info]: {s}");
-      Console.ResetColor();
     }
   }
 }
