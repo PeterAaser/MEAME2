@@ -96,11 +96,11 @@ namespace MEAME2
         throw new System.IO.FileNotFoundException("Binary file not found");
       }
 
-      consoleInfo($"Found binary at {path}");
-      consoleInfo("Uploading new binary...");
+      log.info($"Found binary at {path}");
+      log.info("Uploading new binary...");
       dspDevice.LoadUserFirmware(path, dspPort);           // Code for uploading compiled binary
 
-      consoleOK("Binary uploaded, reconnecting device...");
+      log.ok("Binary uploaded, reconnecting device...");
     }
 
 
@@ -112,12 +112,12 @@ namespace MEAME2
       FirmwareFile = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
       FirmwareFile += @"\..\..\..\..\FB_Example.bin";
 
-      consoleInfo($"Uploading MEAME binary at {FirmwareFile}");
+      log.info($"Uploading MEAME binary at {FirmwareFile}");
       uploadBinary(FirmwareFile);
-      this.meameBinaryUploaded = true;
 
       Thread.Sleep(100);
 
+      resetMail();
       return this.pingTest();
     }
 
