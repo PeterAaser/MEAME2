@@ -67,13 +67,19 @@ namespace MEAME2
       return results;
     }
 
+    public bool stimRequest(BasicStimReq req){
+
+      basicStimTest(req.period);
+
+      return true;
+    }
 
 
     // TODO: Does this actually perform a sufficient factory reset?
     // clearly no...
     public void resetDevices()
     {
-      if(dspDevice.Connect(dspPort, lockMask) == 0)
+      if(connect())
         {
           Console.WriteLine("resetting MCU1");
           dspDevice.Coldstart(CFirmwareDestinationNet.MCU1);
@@ -83,7 +89,7 @@ namespace MEAME2
         return;
       }
 
-      dspDevice.Disconnect();
+      disconnect();
     }
 
 
@@ -117,8 +123,7 @@ namespace MEAME2
 
       Thread.Sleep(100);
 
-      resetMail();
-      return this.pingTest();
+      return true;
     }
 
 
@@ -133,19 +138,5 @@ namespace MEAME2
       Console.WriteLine("Uploading control binary");
       uploadBinary(FirmwareFile);
     }
-
-    // public void triggerOldStimReq()
-    // {
-    //   if(dspDevice.Connect(dspPort, lockMask) == 0)
-    //     {
-    //       b *= 2;
-    //       if(b > 1000000){ b = 10000; }
-
-    //       dspDevice.WriteRegister(DAC_ID, b);
-    //     }
-    //   else{ Console.WriteLine("Connection Error"); return; }
-    //   dspDevice.Disconnect();
-    // }
-
   }
 }

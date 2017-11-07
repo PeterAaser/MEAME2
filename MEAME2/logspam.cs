@@ -8,7 +8,7 @@ namespace MEAME2
 
     public static void err(String s, String id = ""){
       Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine($"[{id}Error]: {s}");
+      Console.WriteLine($"[{id}Error]: {s}\n");
       Console.ResetColor();
     }
 
@@ -20,7 +20,13 @@ namespace MEAME2
 
     public static void ok(String s, String id = ""){
       Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[{id}Info]: {s}\n\n");
+      Console.WriteLine($"[{id}Info]: {s}");
+      Console.ResetColor();
+    }
+
+    public static void msg(String s){
+      Console.ForegroundColor = ConsoleColor.Cyan;
+      Console.WriteLine($"[Info]: {s}");
       Console.ResetColor();
     }
 

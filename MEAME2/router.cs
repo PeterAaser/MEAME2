@@ -47,6 +47,7 @@ namespace MEAME2
       Post["/DSP/dsptest"] = _ => testRegs();
       Post["/DSP/setreg"] = _ => setRegs();
       Post["/DSP/readreg"] = _ => readRegs();
+      Post["/DSP/stimreq"] = _ => stimReq();
 
     }
 
@@ -214,6 +215,30 @@ namespace MEAME2
           ContentType = "application/json",
           Contents = s => s.Write(hurr, 0, hurr.Length)
         };
+      }
+      catch (Exception e){
+        log.err("read regs malformed request");
+        Console.WriteLine(e);
+        return 500;
+      }
+      log.ok("Registers read successful");
+      return 200;
+    }
+
+
+    private dynamic stimReq(){
+      log.info("Got request for setting DSP stim");
+      try {
+        string body = this.getJsonBody();
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        BasicStimReq r = serializer.Deserialize<BasicStimReq>(memer);
+
+        controller.basicStimReq(r);
+
+        log.info($"Got stim req with period {r.period}");
+
       }
       catch (Exception e){
         log.err("read regs malformed request");

@@ -23,6 +23,12 @@ namespace MEAME2
 
 
   [Serializable]
+  public class BasicStimReq{
+    public int period { get; set; }
+  }
+
+
+  [Serializable]
   public class DAQconfig {
     public int samplerate { get; set; }
     public int segmentLength { get; set; }

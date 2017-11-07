@@ -20,6 +20,7 @@ namespace MEAME2
     bool testDSP();
     bool setRegs(RegSetRequest r);
     RegReadResponse readRegs(RegReadRequest r);
+    void basicStimReq(BasicStimReq s);
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -131,9 +132,11 @@ namespace MEAME2
 
 
     public bool testDSP(){
-      consoleInfo("Uploading MEAME binary");
-      initDSP();
-      return dsp.test();
+      // consoleInfo("Uploading MEAME binary");
+      // initDSP();
+      // return dsp.test();
+      log.err("called method that does nothing");
+      return true;
     }
 
 
@@ -144,6 +147,11 @@ namespace MEAME2
       RegReadResponse resp = new RegReadResponse();
       resp.values = this.dsp.readRegRequest(r);
       return resp;
+    }
+
+
+    public void basicStimReq(BasicStimReq s){
+      this.dsp.basicStimTest(s.period);
     }
 
 
