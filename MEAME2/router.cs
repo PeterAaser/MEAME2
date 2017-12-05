@@ -40,15 +40,20 @@ namespace MEAME2
       Get["/"] = _ => "hello this is MEAME.";
       Post["/logmsg"] = _ => logmsg();
 
-      Post["/DAQ/connect"] = _ => connectDAQ();
-      Get["/DAQ/start"] = _ => startDAQ();
-      Get["/DAQ/stop"] = _ => stopDAQ();
+      Post["/DAQ/connect"]       = _ => connectDAQ();
+      Get["/DAQ/start"]          = _ => startDAQ();
+      Get["/DAQ/stop"]           = _ => stopDAQ();
 
-      Post["/DSP/dsptest"] = _ => testRegs();
-      Post["/DSP/setreg"] = _ => setRegs();
-      Post["/DSP/readreg"] = _ => readRegs();
-      Post["/DSP/stimreq"] = _ => stimReq();
+      Post["/DSP/connect"]       = _ => connectDSP();
+      Post["/DSP/setreg"]        = _ => setRegs();
+      Post["/DSP/readreg"]       = _ => readRegs();
+      Post["/DSP/stimreq"]       = _ => stimReq();
 
+      Post["/DSP/dsptest"]       = _ => testRegs();
+      Post["/DSP/stimtest"]      = _ => stimTest();
+      Post["/DSP/ticktest"]      = _ => tickTest();
+
+      Post["/DSP/dump"]          = _ => stimDump();
     }
 
 
@@ -115,6 +120,9 @@ namespace MEAME2
 
         if (connect){
           log.ok("DAQ connected");
+          log.ok("initializing DSP");
+          controller.initDSP();
+
           return 200;
         }
         log.err("Connecting to DAQ failed");
@@ -125,8 +133,6 @@ namespace MEAME2
         Console.WriteLine(e);
         return 500;
       }
-
-
     }
 
 
@@ -167,15 +173,13 @@ namespace MEAME2
         JsonSerializer serializer = new JsonSerializer();
         RegSetRequest r = serializer.Deserialize<RegSetRequest>(memer);
 
-        if(r.desc == String.Empty)
-          log.info($"Got register set request with no description");
-        else
-          log.info($"Got register set request with description: {r.desc}");
+        log.info($"Got register set request");
 
         log.info($"Setting registers:");
-        log.err($"WARNING: SET REGS IS CURRENTLY SET TO NO-OP");
         log.info(r.ToString());
-        // var hur = controller.setRegs(r);
+
+        // log.err($"WARNING: SET REGS IS CURRENTLY SET TO NO-OP");
+        var hur = controller.setRegs(r);
       }
       catch (Exception e){
         log.err("set regs malformed request");
@@ -195,12 +199,10 @@ namespace MEAME2
         JsonTextReader memer = new JsonTextReader(memeReader);
         JsonSerializer serializer = new JsonSerializer();
         RegReadRequest r = serializer.Deserialize<RegReadRequest>(memer);
+
         RegReadResponse resp = controller.readRegs(r);
 
-        if(r.desc == String.Empty)
-          log.info($"Got register read request with no description");
-        else
-          log.info($"Got register read request with description: {r.desc}");
+        log.info($"Got register read request");
 
         log.info($"Reading registers:");
         log.info(r.ToString());
@@ -225,8 +227,35 @@ namespace MEAME2
       return 200;
     }
 
-
     private dynamic stimReq(){
+      log.info("got stim req");
+      try {
+        string body = this.getJsonBody();
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        StimReq r = serializer.Deserialize<StimReq>(memer);
+
+        // controller.basicStimReq(r);
+
+        log.info($"Got stim req {r.periods[0]}");
+        log.info($"Got stim req {r.periods[1]}");
+        log.info($"Got stim req {r.periods[2]}");
+        log.info($"Got stim req {r.periods[3]}");
+        log.info($"");
+        log.info($"");
+
+      }
+      catch (Exception e){
+        log.err("read regs malformed request");
+        Console.WriteLine(e);
+        return 500;
+      }
+      log.ok("stim applied successful");
+      return 200;
+    }
+
+    private dynamic simpleStimReq(){
       log.info("Got request for setting DSP stim");
       try {
         string body = this.getJsonBody();
@@ -239,6 +268,66 @@ namespace MEAME2
 
         log.info($"Got stim req with period {r.period}");
 
+      }
+      catch (Exception e){
+        log.err("read regs malformed request");
+        Console.WriteLine(e);
+        return 500;
+      }
+      log.ok("stim applied successful");
+      return 200;
+    }
+
+
+    private dynamic stimTest(){
+      log.info("Got request for testing DSP stim");
+      controller.basicStimReq(new BasicStimReq { period = 0x20000} );
+
+      return 200;
+    }
+
+
+    private dynamic tickTest(){
+      log.info("Got request for testing DSP ticks");
+
+      controller.tickTest();
+
+      return 200;
+    }
+
+
+    private dynamic connectDSP(){
+      controller.initDSP();
+      return 200;
+    }
+
+
+    private dynamic stimDump(){
+      log.info("Got request for dumping DSP registers");
+      try {
+        string body = this.getJsonBody();
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        RegReadRequest r = serializer.Deserialize<RegReadRequest>(memer);
+
+        RegReadResponse resp = controller.readRegsDirect(r);
+
+        log.info($"Got register direct read request");
+
+        log.info($"Reading registers:");
+        log.info(r.ToString());
+
+        log.info($"Returning values:");
+        log.info(resp.ToString());
+        string output = JsonConvert.SerializeObject(resp);
+        var hurr = Encoding.UTF8.GetBytes(output);
+
+        return new Response
+        {
+          ContentType = "application/json",
+          Contents = s => s.Write(hurr, 0, hurr.Length)
+        };
       }
       catch (Exception e){
         log.err("read regs malformed request");

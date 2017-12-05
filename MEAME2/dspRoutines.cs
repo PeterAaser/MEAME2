@@ -34,13 +34,38 @@ namespace MEAME2
       if(connect()){
         dspDevice.WriteRegister(STIMPACK_SAMPLE, 0x0);
         dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period);
-        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x21);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x1);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
         disconnect();
       }
 
-      issueStim();
+      issueStim(0);
+
+
+      if(connect()){
+        dspDevice.WriteRegister(STIMPACK_SAMPLE, 0x1);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*3);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x0);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x1);
+
+        disconnect();
+      }
+
+      issueStim(1);
+
+
+      if(connect()){
+        dspDevice.WriteRegister(STIMPACK_SAMPLE, 0x2);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*9);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x0);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x1000000);
+
+        disconnect();
+      }
+
+      issueStim(2);
+
     }
 
 

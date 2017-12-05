@@ -67,6 +67,19 @@ namespace MEAME2
       return results;
     }
 
+
+    public uint[] readRegDirect(RegReadRequest regs){
+      uint[] results = new uint[regs.addresses.Length];
+      if(connect()){
+        for(int ii = 0; ii < regs.addresses.Length; ii++){
+          results[ii] = dspDevice.ReadRegister(regs.addresses[ii]);
+        }
+      }
+      disconnect();
+      log.info("reg direct successfully disconnected");
+      return results;
+    }
+
     public bool stimRequest(BasicStimReq req){
 
       basicStimTest(req.period);

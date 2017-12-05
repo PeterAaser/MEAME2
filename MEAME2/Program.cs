@@ -1,6 +1,7 @@
 ﻿using System;
 using Nancy.Hosting.Self;
 using System.Diagnostics;
+using System.Threading;
 
 namespace MEAME2
 {
@@ -8,7 +9,7 @@ namespace MEAME2
   {
     public static void Main (string[] args)
     {
-      // Console.ForegroundColor = ConsoleColor.Cyan;
+      Console.ForegroundColor = ConsoleColor.Cyan;
       Console.WriteLine ("STARTING MEAME SERVER...");
 
       var nancyHost = new NancyHost(new Uri("http://localhost:8888/"));
@@ -24,6 +25,13 @@ namespace MEAME2
       nancyHost.Stop();
       Console.WriteLine("Stopped, see ya!");
 
+
+      ////////////////////////////////////////
+      ////////////////////////////////////////
+      ////////////////////////////////////////
+      ////////////////////////////////////////
+
+
       // Console.WriteLine("Auxilliary test method");
 
       // DSPComms dspComms = new DSPComms();
@@ -31,8 +39,14 @@ namespace MEAME2
       // dspComms.init();
       // log.msg("upload");
       // dspComms.uploadMeameBinary();
-      // log.msg("barf comms");
-      // dspComms.barfComms();
+
+      // Thread.Sleep(100);
+      // Thread.Sleep(100);
+      // Thread.Sleep(100);
+      // Thread.Sleep(100);
+
+      // log.msg("barf debug");
+      // dspComms.barfDebug();
 
       // dspComms.writeTest();
       // dspComms.readTest();

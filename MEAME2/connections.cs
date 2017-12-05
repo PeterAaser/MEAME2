@@ -49,6 +49,8 @@ namespace MEAME2
           }
           catch (SocketException e) {
             ChannelListeners.RemoveAt(ii);
+            log.info($"removed channel listener {ii}");
+            log.info($"now {ChannelListeners.Count} listeners");
           }
         }
       }
@@ -100,41 +102,10 @@ namespace MEAME2
         }
         catch (SocketException e) {
           SawToothListeners.RemoveAt(ii);
+          log.info($"removed sawtooth listener {ii}");
+          log.info($"now {SawToothListeners.Count} listeners");
         }
       }
     }
-
-    // void printStuff( Dictionary<int, int[]> data, int returnedFrames ){
-    //   var allKeys = data.Keys.ToArray();
-    //   for (int key = 0; key < 64; key++){
-    //     Console.WriteLine($"---[{key}]---");
-    //     int count = 0;
-    //     for (int jj = 0; jj < 90; jj++){
-    //       // Console.Write($"[{data[key][jj]}]");
-    //       int ghettoAbs = 0;
-    //       if(data[key][jj] > 0){
-    //         ghettoAbs = data[key][jj];
-    //       }else{
-    //         ghettoAbs = -data[key][jj];
-    //       }
-    //       count += ghettoAbs;
-    //     }
-    //     Console.WriteLine();
-    //     Console.WriteLine(count);
-    //     Console.WriteLine();
-    //   }
-    // }
-
-
-    // private void throttledPrint(String s){
-    //   if(throttle == 1000){
-    //     Console.ForegroundColor = ConsoleColor.Yellow;
-    //     Console.WriteLine($"[CM Info]: {s}");
-    //     Console.ResetColor();
-    //     throttle = 0;
-    //   }
-    //   throttle++;
-    // }
-
   }
 }

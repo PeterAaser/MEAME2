@@ -23,7 +23,7 @@ namespace MEAME2
 
   public partial class DSPComms {
 
-    enum DspOps : uint {READ=1, WRITE=2, DUMP=3, RESET=4, STIMPACK=5};
+    enum DspOps : uint {READ=1, WRITE=2, DUMP=3, RESET=4, STIMPACK=5, TICK_TEST=6};
 
     private bool DSPready = false;
     private uint readReqCounter = 0;
@@ -53,6 +53,8 @@ namespace MEAME2
     static uint COMMS6                      = (MAIL_BASE + 0x20);
     static uint ERROR                       = (MAIL_BASE + 0x24);
     static uint ERROR_VAL                   = (MAIL_BASE + 0x28);
+    static uint ERROR_OP1                   = (MAIL_BASE + 0x2c);
+    static uint ERROR_OP2                   = (MAIL_BASE + 0x30);
 
     static uint DEBUG1                      = (MAIL_BASE + 0x2c);
     static uint DEBUG2                      = (MAIL_BASE + 0x30);
@@ -215,7 +217,6 @@ namespace MEAME2
           dspDevice.WriteRegister(valueToBeWrittenAddress, val);
 
           uint oldBufferIdx = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
-
           uint dbgRead = dspDevice.ReadRegister(addr);
 
           nextCommsBuffer();
@@ -282,8 +283,52 @@ namespace MEAME2
       }
     }
 
+    public void tickTest(){
+      var first = tickTest_();
+      Thread.Sleep(1000);
+      var second = tickTest_();
+      log.ok($"One second apart: t1: {first}, t2: {second}, elapsed: {second - first}");
+    }
 
-    private bool issueStim(){
+    private uint tickTest_(){
+      if(connect()){
+
+        uint opTypeAddress       = this.opTypeAddress;
+        uint readAddressAddress  = this.op1Address;
+        uint deviceResultAddress = this.op2Address;
+
+        dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.TICK_TEST);
+
+        uint oldBufferIdx = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
+        uint returnAddress = readAddressAddress;
+
+        nextCommsBuffer();
+
+        dspDevice.WriteRegister(COMMS_BUFFER_MASTER_IDX, instructionIndex);
+
+        uint rval = 0xDEAD;
+        bool success = checkRead();
+
+        rval = dspDevice.ReadRegister(deviceResultAddress);
+
+        disconnect();
+
+        if(success){
+        }
+        else{
+          log.err("tick test read failure");
+        }
+        return rval;
+      }
+
+      else{
+        log.err("read is Unable to connect to device");
+        return 0xDEAD;
+      }
+    }
+
+
+    private bool issueStim(uint stimgroup){
       if(connect())
         {
           dspDevice.WriteRegister(ERROR, 0x0);
@@ -294,7 +339,7 @@ namespace MEAME2
 
           // addr val
           dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.STIMPACK);
-          dspDevice.WriteRegister(DAC, 0x0);
+          dspDevice.WriteRegister(DAC, stimgroup);
 
           uint oldBufferIdx = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
 
@@ -335,7 +380,9 @@ namespace MEAME2
       uint err = dspDevice.ReadRegister(ERROR);
       if(err == 0x1){
         uint errVal = dspDevice.ReadRegister(ERROR_VAL);
-        log.err($"DSP reports error {err} with error val {errVal}");
+        uint errOp1 = dspDevice.ReadRegister(ERROR_OP1);
+        uint errOp2 = dspDevice.ReadRegister(ERROR_OP2);
+        log.err($"DSP reports error {err} with error val {errVal:X}, {errOp1:X}, {errOp2:X}");
         return false;
       }
 

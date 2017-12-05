@@ -17,8 +17,8 @@ namespace MEAME2
 
   [Serializable]
   public class StimReq{
-    public int[] electrodes { get; set; }
-    public double[] stimFreqs { get; set; }
+    public int[] periods { get; set; }
+    // public int[] electrodes { get; set; }
   }
 
 
@@ -39,7 +39,7 @@ namespace MEAME2
   public class RegSetRequest {
     public uint[] addresses { get; set; }
     public uint[] values { get; set; }
-    public String desc { get; set; }
+
     public override string ToString(){
       String r = "Register set request with values:\n";
       for(int ii = 0; ii < values.Length; ii++){
@@ -53,7 +53,7 @@ namespace MEAME2
   [Serializable]
   public class RegReadRequest {
     public uint[] addresses { get; set; }
-    public String desc { get; set; }
+
     public override string ToString(){
       String r = "Register read request with values:\n";
       for(int ii = 0; ii < addresses.Length; ii++){
@@ -66,7 +66,9 @@ namespace MEAME2
 
   [Serializable]
   public class RegReadResponse {
+    public uint[] addresses { get; set; }
     public uint[] values { get; set; }
+
     public override string ToString(){
       String r = "Register read response with values:\n";
       for(int ii = 0; ii < values.Length; ii++){

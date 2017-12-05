@@ -74,7 +74,6 @@ namespace MEAME2
       int ana, digi, che, tim, block;
       dataAcquisitionDevice.GetChannelLayout(out ana, out digi, out che, out tim, out block, 0);
 
-
       dataAcquisitionDevice.SetSampleRate(samplerate, 1, 0);
 
       int gain = dataAcquisitionDevice.GetGain();
@@ -84,8 +83,8 @@ namespace MEAME2
         GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(out voltageranges);
 
 
-      bool[] selectedChannels = new bool[block];
-      for (int i = 0; i < block; i++){ selectedChannels[i] = true; } // hurr
+      bool[] selectedChannels = new bool[block/2];
+      for (int i = 0; i < block/2; i++){ selectedChannels[i] = true; } // hurr
 
 
       // *org [[file:killme.cs::/%20a%20device%20are%20read%20in%2032%20bit%20data%20format%20nChannels%20=%20ChannelsInBlock/2][documentation]]

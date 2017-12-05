@@ -16,11 +16,15 @@ namespace MEAME2
     bool startServer();
     bool stopServer();
     bool connectDAQ(DAQconfig d);
+    void initDSP();
     string getDevicesDescription();
     bool testDSP();
     bool setRegs(RegSetRequest r);
     RegReadResponse readRegs(RegReadRequest r);
+    RegReadResponse readRegsDirect(RegReadRequest r);
     void basicStimReq(BasicStimReq s);
+    void stimReq(StimReq s);
+    void tickTest();
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -32,6 +36,7 @@ namespace MEAME2
     private DSPComms          dsp;
     private bool              DAQconfigured;
     private bool              DAQrunning;
+    private bool              dspConfigured = false;
 
     private String[] devices;
 
@@ -75,14 +80,16 @@ namespace MEAME2
           this.channelServer.startListener();
           return true;
         }
+        else {
+          log.info("Got start server req on already started server");
+          return true;
+        }
       }
       catch (Exception e) {
         log.err("startServer exception");
         Console.WriteLine(e);
         throw e;
-        return false;
       }
-      return false;
     }
 
 
@@ -101,13 +108,16 @@ namespace MEAME2
       return false;
     }
 
+    public void tickTest(){
+      this.dsp.tickTest();
+    }
 
     public bool connectDAQ(DAQconfig d){
 
       this.updateDeviceList();
 
       bool devicePresent = (devices.Any(p => p[p.Length - 1] == 'A'));
-      if(devicePresent){
+      if(devicePresent && !DAQconfigured){
         try {
           this.daq.samplerate = d.samplerate;
           this.daq.segmentLength = d.segmentLength;
@@ -122,12 +132,20 @@ namespace MEAME2
           throw e;
         }
       }
+      else{
+        log.info("Tried to connect to already connected/configured device");
+      }
       return devicePresent && this.DAQconfigured;
     }
 
 
-    public bool initDSP(){
-      return this.dsp.uploadMeameBinary();
+    public void initDSP(){
+      // if(dspConfigured){
+      //   log.err("Tried to connect DSP, but it is already flashed");
+      //   log.err("While reflashing while running is a legit usecase");
+      //   log.err("for now accept that it cannot be done for reasons, none of the good.");
+      // }
+      this.dsp.uploadMeameBinary();
     }
 
 
@@ -143,15 +161,29 @@ namespace MEAME2
     public bool setRegs(RegSetRequest r){
       return this.dsp.writeRegRequest(r);
     }
+
     public RegReadResponse readRegs(RegReadRequest r){
       RegReadResponse resp = new RegReadResponse();
       resp.values = this.dsp.readRegRequest(r);
+      resp.addresses = r.addresses;
+      return resp;
+    }
+
+    public RegReadResponse readRegsDirect(RegReadRequest r){
+      RegReadResponse resp = new RegReadResponse();
+      resp.values = this.dsp.readRegDirect(r);
+      resp.addresses = r.addresses;
       return resp;
     }
 
 
     public void basicStimReq(BasicStimReq s){
       this.dsp.basicStimTest(s.period);
+    }
+
+
+    public void stimReq(StimReq s){
+      this.dsp.stimReq(s);
     }
 
 
