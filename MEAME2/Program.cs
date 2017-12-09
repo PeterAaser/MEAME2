@@ -67,17 +67,5 @@ namespace MEAME2
       // Console.ReadKey();
 
     }
-
-
-
-    public static void notServer (string[] args){
-      Console.WriteLine("Auxilliary test method");
-
-      DSPComms dspComms = new DSPComms();
-      dspComms.init();
-
-      Console.WriteLine("Done, press any key to exit");
-      Console.ReadKey();
-    }
   }
 }

@@ -1,11 +1,11 @@
-* Notes from original code
-** uses the following:
-*** setSelectData
-*** AddSelecteChannelsQueue
-*** ChannelBlock_SetCommonThreshold
+* Doing
+  Pruning the unecessary stuff.
+  Might need to add electrodes in the stimreq class.
+  Should the List -> Int part be done here, or on 
+  SHODAN?
 
-
-* Next time
-  Implement get_master_idx, run tests
+* TODO Investigate if I can axe the read/write stuff
+  Now that the DSP crashes significantly less it might not
+  be necessary to read and write using auxillary methods.
 
 * DSP

@@ -55,7 +55,6 @@ namespace MEAME2
       for(int ii = 0; ii < regs.addresses.Length; ii++){
         succ = (succ && writeReg(regs.addresses[ii], regs.values[ii]));
       }
-      // S U C C
       return succ;
     }
 
@@ -88,43 +87,9 @@ namespace MEAME2
     }
 
 
-    // TODO: Does this actually perform a sufficient factory reset?
-    // clearly no...
-    public void resetDevices()
-    {
-      if(connect())
-        {
-          Console.WriteLine("resetting MCU1");
-          dspDevice.Coldstart(CFirmwareDestinationNet.MCU1);
-        }
-      else{
-        Console.WriteLine("Connection Error when attempting to reset device");
-        return;
-      }
 
-      disconnect();
-    }
+    public bool uploadMeameBinary(){
 
-
-
-    // The binary upload functions should probably be moved, possibly even to a different program.
-    private void uploadBinary(String path)
-    {
-
-      if(!System.IO.File.Exists(path)){
-        throw new System.IO.FileNotFoundException("Binary file not found");
-      }
-
-      log.info($"Found binary at {path}");
-      log.info("Uploading new binary...");
-      dspDevice.LoadUserFirmware(path, dspPort);           // Code for uploading compiled binary
-
-      log.ok("Binary uploaded, reconnecting device...");
-    }
-
-
-    public bool uploadMeameBinary()
-    {
       string FirmwareFile;
 
       // YOLO :---DDDd
@@ -132,24 +97,20 @@ namespace MEAME2
       FirmwareFile += @"\..\..\..\..\FB_Example.bin";
 
       log.info($"Uploading MEAME binary at {FirmwareFile}");
-      uploadBinary(FirmwareFile);
+
+      if(!System.IO.File.Exists(FirmwareFile)){
+        throw new System.IO.FileNotFoundException("Binary file not found");
+      }
+
+      log.info($"Found binary at {FirmwareFile}");
+      log.info("Uploading new binary...");
+      dspDevice.LoadUserFirmware(FirmwareFile, dspPort);           // Code for uploading compiled binary
+
+      log.ok("Binary uploaded, reconnecting device...");
 
       Thread.Sleep(100);
 
       return true;
-    }
-
-
-    public void uploadOldBinary()
-    {
-      string FirmwareFile;
-
-      // YOLO :---DDDd
-      FirmwareFile = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-      FirmwareFile += @"\..\..\..\..\control_group.bin";
-
-      Console.WriteLine("Uploading control binary");
-      uploadBinary(FirmwareFile);
     }
   }
 }

@@ -47,11 +47,9 @@ namespace MEAME2
       Post["/DSP/connect"]       = _ => connectDSP();
       Post["/DSP/setreg"]        = _ => setRegs();
       Post["/DSP/readreg"]       = _ => readRegs();
-      Post["/DSP/stimreq"]       = _ => stimReq();
 
-      Post["/DSP/dsptest"]       = _ => testRegs();
+      Post["/DSP/stimreq"]       = _ => stimReq();
       Post["/DSP/stimtest"]      = _ => stimTest();
-      Post["/DSP/ticktest"]      = _ => tickTest();
 
       Post["/DSP/dump"]          = _ => stimDump();
     }
@@ -96,7 +94,7 @@ namespace MEAME2
 
 
     private dynamic logmsg(){
-      consoleMsg(this.Request.Body.AsString());
+      log.info(this.Request.Body.AsString());
       return 200;
     }
 
@@ -236,7 +234,7 @@ namespace MEAME2
         JsonSerializer serializer = new JsonSerializer();
         StimReq r = serializer.Deserialize<StimReq>(memer);
 
-        // controller.basicStimReq(r);
+        controller.stimReq(r);
 
         log.info($"Got stim req {r.periods[0]}");
         log.info($"Got stim req {r.periods[1]}");
@@ -281,16 +279,7 @@ namespace MEAME2
 
     private dynamic stimTest(){
       log.info("Got request for testing DSP stim");
-      controller.basicStimReq(new BasicStimReq { period = 0x20000} );
-
-      return 200;
-    }
-
-
-    private dynamic tickTest(){
-      log.info("Got request for testing DSP ticks");
-
-      controller.tickTest();
+      controller.basicStimReq(new BasicStimReq { period = 0x10000} );
 
       return 200;
     }
@@ -331,30 +320,11 @@ namespace MEAME2
       }
       catch (Exception e){
         log.err("read regs malformed request");
-        Console.WriteLine(e);
+        log.err($"{e}");
         return 500;
       }
       log.ok("Registers read successful");
       return 200;
-    }
-
-
-    private dynamic testRegs(){
-      log.info("Get request for testing DSP registers");
-      if(controller.testDSP()){
-        log.ok("DSP Reg test successful");
-        return 200;
-      }
-      else{
-        log.err("DSP Reg test failed");
-        return 500;
-      }
-    }
-
-    private void consoleMsg(String s){
-      Console.ForegroundColor = ConsoleColor.Cyan;
-      Console.WriteLine($"[Info]: {s}\n\n");
-      Console.ResetColor();
     }
   }
 }

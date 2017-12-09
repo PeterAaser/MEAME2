@@ -18,13 +18,11 @@ namespace MEAME2
     bool connectDAQ(DAQconfig d);
     void initDSP();
     string getDevicesDescription();
-    bool testDSP();
     bool setRegs(RegSetRequest r);
     RegReadResponse readRegs(RegReadRequest r);
     RegReadResponse readRegsDirect(RegReadRequest r);
     void basicStimReq(BasicStimReq s);
     void stimReq(StimReq s);
-    void tickTest();
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -94,22 +92,12 @@ namespace MEAME2
 
 
     public bool stopServer(){
-      try{
-        if(this.DAQconfigured && DAQrunning){
-          this.daq.stopDevice();
-          this.DAQrunning = false;
-          return true;
-        }
-      }
-      catch (Exception e) {
-        // uhh...
-        throw e;
+      if(this.DAQconfigured && DAQrunning){
+        this.daq.stopDevice();
+        this.DAQrunning = false;
+        return true;
       }
       return false;
-    }
-
-    public void tickTest(){
-      this.dsp.tickTest();
     }
 
     public bool connectDAQ(DAQconfig d){
@@ -140,23 +128,8 @@ namespace MEAME2
 
 
     public void initDSP(){
-      // if(dspConfigured){
-      //   log.err("Tried to connect DSP, but it is already flashed");
-      //   log.err("While reflashing while running is a legit usecase");
-      //   log.err("for now accept that it cannot be done for reasons, none of the good.");
-      // }
       this.dsp.uploadMeameBinary();
     }
-
-
-    public bool testDSP(){
-      // consoleInfo("Uploading MEAME binary");
-      // initDSP();
-      // return dsp.test();
-      log.err("called method that does nothing");
-      return true;
-    }
-
 
     public bool setRegs(RegSetRequest r){
       return this.dsp.writeRegRequest(r);
@@ -184,25 +157,6 @@ namespace MEAME2
 
     public void stimReq(StimReq s){
       this.dsp.stimReq(s);
-    }
-
-
-    private void consoleError(String s){
-      Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine($"[Error]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleInfo(String s){
-      Console.ForegroundColor = ConsoleColor.Yellow;
-      Console.WriteLine($"[Info]: {s}");
-      Console.ResetColor();
-    }
-
-    private void consoleOK(String s){
-      Console.ForegroundColor = ConsoleColor.Green;
-      Console.WriteLine($"[Info]: {s}\n\n");
-      Console.ResetColor();
     }
   }
 }
