@@ -7,5 +7,12 @@
 * TODO Investigate if I can axe the read/write stuff
   Now that the DSP crashes significantly less it might not
   be necessary to read and write using auxillary methods.
+  
+* TODO Freeze MEAME2 API
+  Figure out stimulus, and we are very close to ready here boys
+** TODO Stim site configuration API
+   Like DAQ conf, the layout of stim should be done at conf time,
+   not at request time. Dynamically reconfiguring this is very
+   far from a priority.
 
 * DSP

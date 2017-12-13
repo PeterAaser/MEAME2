@@ -15,8 +15,6 @@ namespace MEAME2
     public SampleSizeNet dataFormat { get; set; }
     public Action<Dictionary<int, int[]>, int> onChannelData { get; set; }
 
-    private int barfCounter = 0;
-
     public override String ToString(){
       return deviceInfo;
     }
@@ -191,16 +189,6 @@ namespace MEAME2
            segmentLength,
            out returnedFrames);
 
-        if(barfCounter < 3000){
-          if(barfCounter == 2999){
-            log.info($"totalChannels:  {totalChannels}", "DAQ DEBUG");
-            log.info($"offset:         {totalChannels}", "DAQ DEBUG");
-            log.info($"channels:       {totalChannels}", "DAQ DEBUG");
-            log.info($"returnedFrames: {totalChannels}", "DAQ DEBUG");
-          }
-          barfCounter++;
-        }
-
         onChannelData(data, returnedFrames);
       }
       catch (Exception e){
@@ -216,8 +204,8 @@ namespace MEAME2
     private void onError(String msg, int info){
       Console.ForegroundColor = ConsoleColor.Red;
       log.err("DAQ on error invoked :(", "DAQ ");
-      // Console.WriteLine(info);
-      // Console.WriteLine(msg);
+      log.err($"{info}");
+      log.err($"{msg}");
 
       dataAcquisitionDevice.StopDacq();
       dataAcquisitionDevice.Dispose();

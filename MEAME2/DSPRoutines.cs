@@ -11,10 +11,18 @@ namespace MEAME2
   using Mcs.Usb;
 
   public partial class DSPComms {
-
     private int connectCounter = 0;
 
-    public void basicStimTest(int period){
+
+    public void stimReq(StimReq s){
+      log.err("stimReq is NOT IMPLEMENTED");
+    }
+    public void basicStimTest(int dummy){
+
+      log.info("running basic stim test");
+
+      uint period = 0xC350;
+
       if(connect()){
         dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x1);
@@ -22,40 +30,36 @@ namespace MEAME2
 
         disconnect();
       }
-
       issueStim(0);
 
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*3);
-        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x40);
-        dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
-
-        disconnect();
-      }
-
-      issueStim(1);
-
-
-      if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*7);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*2);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x400);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
         disconnect();
       }
+      issueStim(1);
 
+
+      if(connect()){
+        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*3);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x400);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
+
+        disconnect();
+      }
       issueStim(2);
 
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*11);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*4);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x200000);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
         disconnect();
       }
-
       issueStim(3);
     }
 
@@ -168,7 +172,6 @@ namespace MEAME2
       }
     }
 
-
     public uint readReg(uint addr){
       if(connect())
         {
@@ -208,9 +211,6 @@ namespace MEAME2
     }
 
 
-    public void stimReq(StimReq s){
-      log.err("stimReq is NOT IMPLEMENTED");
-    }
 
 
     private bool issueStim(uint stimgroup){
@@ -219,12 +219,12 @@ namespace MEAME2
           dspDevice.WriteRegister(ERROR, 0x0);
           dspDevice.WriteRegister(ERROR_VAL, 0x0);
 
-          uint opTypeAddress           = this.opTypeAddress;
-          uint DAC                     = this.op1Address;
+          uint opTypeAddress = this.opTypeAddress;
+          uint group         = this.op1Address;
 
           // addr val
           dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.STIMPACK);
-          dspDevice.WriteRegister(DAC, stimgroup);
+          dspDevice.WriteRegister(group, stimgroup);
 
           uint oldBufferIdx = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
 
@@ -246,7 +246,10 @@ namespace MEAME2
       }
     }
 
-
+    /**
+       Checks if the read was successful on the DSP. Usually the canary
+       letting us know when the DSP has shit itself yet again.
+     */
     private bool checkRead(){
       bool success = false;
       for(int ii = 0; ii < 10; ii++){
@@ -268,6 +271,38 @@ namespace MEAME2
       }
 
       return success;
+    }
+
+    public void dspDebugBarf(){
+      if(connect())
+        {
+          dspDevice.WriteRegister(ERROR, 0x0);
+          dspDevice.WriteRegister(ERROR_VAL, 0x0);
+
+          uint opTypeAddress = this.opTypeAddress;
+          uint group         = this.op1Address;
+
+          // addr val
+          dspDevice.WriteRegister(opTypeAddress, (uint)DspOps.STIM_DEBUG);
+
+          uint oldBufferIdx = dspDevice.ReadRegister(COMMS_BUFFER_SLAVE_IDX);
+
+          nextCommsBuffer();
+
+          dspDevice.WriteRegister(COMMS_BUFFER_MASTER_IDX, instructionIndex);
+          bool success = checkRead();
+
+          disconnect();
+
+          if(!success){
+            log.err("debug barf failure");
+          }
+          // return success;
+        }
+      else{
+        log.err("dsp debug failed to write to device");
+        // return false;
+      }
     }
   }
 }

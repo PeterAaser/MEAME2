@@ -36,7 +36,6 @@ namespace MEAME2
 
       this.controller = controller;
 
-      Get["/status"] = _ => this.hello();
       Get["/"] = _ => "hello this is MEAME.";
       Post["/logmsg"] = _ => logmsg();
 
@@ -51,7 +50,8 @@ namespace MEAME2
       Post["/DSP/stimreq"]       = _ => stimReq();
       Post["/DSP/stimtest"]      = _ => stimTest();
 
-      Post["/DSP/dump"]          = _ => stimDump();
+      Post["/DSP/barf"]          = _ => readDSPlog();
+      Post["/DSP/reset_debug"]   = _ => resetDebug();
     }
 
 
@@ -66,40 +66,26 @@ namespace MEAME2
     }
 
 
-    private dynamic hello(){
-      log.info("Http hello request");
-      log.ok("Hello :D");
-      return "Hello :D";
+    /**
+       Does nothing useful, should let us know if MEAME2 is online,
+       if anyone is currently using it, and what the settings are.
+     */
+    private dynamic status(){
+      return 200;
     }
 
-
-    private dynamic status()
-    {
-      string meme = controller.getDevicesDescription();
-      byte[] jsonBytes = Encoding.UTF8.GetBytes(meme);
-
-      return new Response()
-        {
-          StatusCode = HttpStatusCode.OK,
-          ContentType = "application/json",
-          ReasonPhrase = "here's some fucking data",
-          Headers = new Dictionary<string, string>()
-          {
-            { "Content-Type", "application/json" },
-            { "X-Custom-Header", "heyyy gamers" }
-          },
-          Contents = c => c.Write(jsonBytes, 0, jsonBytes.Length)
-        };
-    }
-
-
+    /**
+       Writes a message to MEAME2 console
+     */
     private dynamic logmsg(){
       log.info(this.Request.Body.AsString());
       return 200;
     }
 
 
-    // Requires a JSON in the body
+    /**
+
+     */
     private dynamic connectDAQ(){
 
       log.info("Got request for DAQ connect");
@@ -123,12 +109,13 @@ namespace MEAME2
 
           return 200;
         }
-        log.err("Connecting to DAQ failed");
-        return 500; // what if it's just a generic error? dunno lol use remmina...
+        else{
+          log.err("Connecting to DAQ failed");
+          return 500;
+        }
       }
       catch (Exception e){ // should only catch deserialize error, dunno how xD
-        log.err("malformed request");
-        Console.WriteLine(e);
+        log.err($"{e}");
         return 500;
       }
     }
@@ -137,11 +124,10 @@ namespace MEAME2
     private dynamic startDAQ(){
       log.info("Got request for DAQ start");
 
-      if (controller.startServer())
-        {
-          log.ok("DAQ server started");
-          return 200;
-        }
+      if (controller.startServer()){
+        log.ok("DAQ server started");
+        return 200;
+      }
 
       log.err("DAQ server failed to start");
       return 500;
@@ -149,16 +135,8 @@ namespace MEAME2
 
 
     private dynamic stopDAQ(){
-      log.info("Got request to stop DAQ");
-
-      if (controller.stopServer())
-        {
-          log.ok("DAQ stopped");
-          return 200;
-        }
-
-      log.err("Unable to stop DAQ signalled by DAQ stop return value");
-      return 500;
+      log.err("stopDAQ IS NOT IMPLEMENTED");
+      return 200;
     }
 
 
@@ -176,12 +154,11 @@ namespace MEAME2
         log.info($"Setting registers:");
         log.info(r.ToString());
 
-        // log.err($"WARNING: SET REGS IS CURRENTLY SET TO NO-OP");
         var hur = controller.setRegs(r);
       }
       catch (Exception e){
         log.err("set regs malformed request");
-        Console.WriteLine(e);
+        log.err($"{e}");
         return 500;
       }
       log.ok("Registers have been set");
@@ -284,46 +261,20 @@ namespace MEAME2
       return 200;
     }
 
-
-    private dynamic connectDSP(){
-      controller.initDSP();
+    private dynamic readDSPlog(){
+      log.info("reading log");
+      controller.readDSPlog();
       return 200;
     }
 
+    private dynamic resetDebug(){
+      log.info("resetting mailbox");
+      controller.resetDebug();
+      return 200;
+    }
 
-    private dynamic stimDump(){
-      log.info("Got request for dumping DSP registers");
-      try {
-        string body = this.getJsonBody();
-        StringReader memeReader = new StringReader(body);
-        JsonTextReader memer = new JsonTextReader(memeReader);
-        JsonSerializer serializer = new JsonSerializer();
-        RegReadRequest r = serializer.Deserialize<RegReadRequest>(memer);
-
-        RegReadResponse resp = controller.readRegsDirect(r);
-
-        log.info($"Got register direct read request");
-
-        log.info($"Reading registers:");
-        log.info(r.ToString());
-
-        log.info($"Returning values:");
-        log.info(resp.ToString());
-        string output = JsonConvert.SerializeObject(resp);
-        var hurr = Encoding.UTF8.GetBytes(output);
-
-        return new Response
-        {
-          ContentType = "application/json",
-          Contents = s => s.Write(hurr, 0, hurr.Length)
-        };
-      }
-      catch (Exception e){
-        log.err("read regs malformed request");
-        log.err($"{e}");
-        return 500;
-      }
-      log.ok("Registers read successful");
+    private dynamic connectDSP(){
+      controller.initDSP();
       return 200;
     }
   }

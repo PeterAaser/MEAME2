@@ -14,7 +14,6 @@ namespace MEAME2
   public interface IMEAMEcontrol
   {
     bool startServer();
-    bool stopServer();
     bool connectDAQ(DAQconfig d);
     void initDSP();
     string getDevicesDescription();
@@ -23,6 +22,8 @@ namespace MEAME2
     RegReadResponse readRegsDirect(RegReadRequest r);
     void basicStimReq(BasicStimReq s);
     void stimReq(StimReq s);
+    void readDSPlog();
+    void resetDebug();
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -69,8 +70,6 @@ namespace MEAME2
 
 
     public bool startServer(){
-
-      var tmp = getDevicesDescription();
       try {
         if(this.DAQconfigured && !DAQrunning){
           this.daq.startDevice();
@@ -85,20 +84,11 @@ namespace MEAME2
       }
       catch (Exception e) {
         log.err("startServer exception");
-        Console.WriteLine(e);
-        throw e;
+        log.err($"{e}");
+        return false;
       }
     }
 
-
-    public bool stopServer(){
-      if(this.DAQconfigured && DAQrunning){
-        this.daq.stopDevice();
-        this.DAQrunning = false;
-        return true;
-      }
-      return false;
-    }
 
     public bool connectDAQ(DAQconfig d){
 
@@ -151,12 +141,20 @@ namespace MEAME2
 
 
     public void basicStimReq(BasicStimReq s){
-      this.dsp.basicStimTest(s.period);
+      dsp.basicStimTest(s.period);
+    }
+
+    public void readDSPlog(){
+      dsp.readLog();
+    }
+
+    public void resetDebug(){
+      dsp.resetDebug();
     }
 
 
     public void stimReq(StimReq s){
-      this.dsp.stimReq(s);
+      dsp.stimReq(s);
     }
   }
 }
