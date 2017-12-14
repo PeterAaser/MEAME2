@@ -32,11 +32,9 @@
    format specified in the JSON POST which you can use to verify the correctness of
    your deserialization logic.
    
-** Inner workings
-   The router calls methods from the controller class. The controller interfaces with
-   three objects: The DAQ module (DAta acQuisition), the DSP module and the TCP module.
-   The TCP module listens for incoming TCP connections (TCP is for the data stream,
-   don't confuce TCP and HTTP) and feeds data to listening channels. Relevant files
-   are connections.cs and channelServer.cs
-
-   No documentation is provided for the DSP and DAQ module, enter at your own peril.
+** STG
+   In order to run your stimuli on the DSP you need to perform stim requests.
+   Look at the DSP code, which shuffles the 3 DAC pairs around in order to hit
+   as many stimuli deadlines as possible. If you use the reset, test and barf
+   commands MEAME2 will throw a big log in your face allowing you to parse what
+   is going on inside.

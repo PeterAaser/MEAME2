@@ -191,41 +191,12 @@ namespace MEAME2
       return ids[id];
     }
 
-    // private void handleLogEntry(uint index){
-    //   if(connect()){
 
-    //     uint baseAddress = (index*4*4) + LOG_BASE;
-
-    //     uint id1 =  dspDevice.ReadRegister(baseAddress + 0);
-    //     uint id2 =  dspDevice.ReadRegister(baseAddress + 4);
-    //     uint val1 = dspDevice.ReadRegister(baseAddress + 8);
-    //     uint val2 = dspDevice.ReadRegister(baseAddress + 12);
-
-    //     disconnect();
-
-    //     log.info($"Log entry {index}");
-    //     log.info($"id1:      {lookupId(id1)}");
-    //     log.info($"id2:      {lookupId(id2)}");
-    //     log.info($"value1:   {val1:X}");
-    //     log.info($"timestep: {val2}\n");
-    //   }
-    // }
-
-
-    // public void readLog(){
-    //   uint entries = 0;
-    //   if(connect()){
-    //     entries = dspDevice.ReadRegister(ENTRIES);
-    //     log.info($"reading {entries} log entries, or 1000, whatever is smaller:");
-    //     if(entries > 1000){ entries = 1000; }
-    //     log.info($"reading {entries} log entries:");
-    //     disconnect();
-    //   }
-
-    //   for(uint ii = 0; ii < entries; ii++){
-    //     handleLogEntry(ii);
-    //   }
-    // }
+    // The code underneath is like an orgy of anti-patterns.
+    // I don't care for C# at all, and I don't care about
+    // code used for logging. Don't gauge my ability as a
+    // programmer on what you see here, at least check out
+    // SHODAN
 
     public class LogEntry {
       public uint id1 { get; set; }
