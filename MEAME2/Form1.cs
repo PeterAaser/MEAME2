@@ -1,3 +1,10 @@
+/**
+   This absolute horror is what I started with. Keep that in mind if you judge
+   the abysmal code quality of MEAME2, it could've been even worse.
+ */
+
+
+// 9 programs for the price of one!
 #define channelmethod
 #define channeldata
 //#define pollfordata

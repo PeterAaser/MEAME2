@@ -21,10 +21,10 @@ namespace MEAME2
 
       log.info("running basic stim test");
 
-      uint period = 0xC350;
+      uint ms = 50000/1000;
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, 500*ms);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x1);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
@@ -34,7 +34,7 @@ namespace MEAME2
 
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*2);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, 700*ms);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x400);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
@@ -44,8 +44,8 @@ namespace MEAME2
 
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*3);
-        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x400);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, 710*ms);
+        dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0xC00);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
         disconnect();
@@ -54,7 +54,7 @@ namespace MEAME2
 
 
       if(connect()){
-        dspDevice.WriteRegister(STIMPACK_PERIOD, (uint)period*4);
+        dspDevice.WriteRegister(STIMPACK_PERIOD, 740*ms);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES0, 0x200000);
         dspDevice.WriteRegister(STIMPACK_ELECTRODES1, 0x0);
 
@@ -297,11 +297,9 @@ namespace MEAME2
           if(!success){
             log.err("debug barf failure");
           }
-          // return success;
         }
       else{
         log.err("dsp debug failed to write to device");
-        // return false;
       }
     }
   }

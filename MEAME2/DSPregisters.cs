@@ -41,7 +41,8 @@ namespace MEAME2
       STATE_EN_ELEC    = 6,
       STATE_DAC_SEL    = 7,
       STATE_MODE       = 8,
-      BOOKING          = 9
+      BOOKING          = 9,
+      BOOKING_FOUND    = 12
     };
 
     private uint readReqCounter = 0;
@@ -170,52 +171,184 @@ namespace MEAME2
 
     private string lookupId(uint id){
       string[] ids = {
-        "0 - NOT USED        ",
-        "1 - DAC             ",
-        "2 - CONF            ",
-        "3 - CONF_RESET      ",
-        "4 - CONF_START      ",
-        "5 - TRIGGER         ",
-        "6 - STATE_EN_ELEC   ",
-        "7 - STATE_DAC_SEL   ",
-        "8 - STATE_MODE      ",
-        "9 - BOOKING         "
+        "0  - NOT USED        ",
+        "1  - DAC_STATE_CHANGE",
+        "2  - CONF            ",
+        "3  - CONF_RESET      ",
+        "4  - CONF_START      ",
+        "5  - TRIGGER         ",
+        "6  - STATE_EN_ELEC   ",
+        "7  - STATE_DAC_SEL   ",
+        "8  - STATE_MODE      ",
+        "9  - BOOKING         ",
+        "10 - MEAME2 STIM REQ ",
+        "11 - COMMS GOT STIM REQ"
       };
-      return ids[id];
 
-    }
-
-    private void handleLogEntry(uint index){
-      if(connect()){
-
-        uint address = (index*4) + LOG_BASE;
-
-        uint id1 =  dspDevice.ReadRegister((address + (4 * 0)));
-        uint id2 =  dspDevice.ReadRegister((address + (4 * 1)));
-        uint val1 = dspDevice.ReadRegister((address + (4 * 2)));
-        uint val2 = dspDevice.ReadRegister((address + (4 * 3)));
-
-        disconnect();
-
-        log.info($"Log entry {index}");
-        log.info($"id1: {lookupId(id1)}");
-        log.info($"id2: {lookupId(id2)}");
-        log.info($"value1: {val1:X}");
-        log.info($"value2: {val2:X}\n");
+      if(id > ids.Length){
+        return $"out of bounds: {id}";
       }
+      return ids[id];
     }
 
-    public void readLog(){
+    // private void handleLogEntry(uint index){
+    //   if(connect()){
+
+    //     uint baseAddress = (index*4*4) + LOG_BASE;
+
+    //     uint id1 =  dspDevice.ReadRegister(baseAddress + 0);
+    //     uint id2 =  dspDevice.ReadRegister(baseAddress + 4);
+    //     uint val1 = dspDevice.ReadRegister(baseAddress + 8);
+    //     uint val2 = dspDevice.ReadRegister(baseAddress + 12);
+
+    //     disconnect();
+
+    //     log.info($"Log entry {index}");
+    //     log.info($"id1:      {lookupId(id1)}");
+    //     log.info($"id2:      {lookupId(id2)}");
+    //     log.info($"value1:   {val1:X}");
+    //     log.info($"timestep: {val2}\n");
+    //   }
+    // }
+
+
+    // public void readLog(){
+    //   uint entries = 0;
+    //   if(connect()){
+    //     entries = dspDevice.ReadRegister(ENTRIES);
+    //     log.info($"reading {entries} log entries, or 1000, whatever is smaller:");
+    //     if(entries > 1000){ entries = 1000; }
+    //     log.info($"reading {entries} log entries:");
+    //     disconnect();
+    //   }
+
+    //   for(uint ii = 0; ii < entries; ii++){
+    //     handleLogEntry(ii);
+    //   }
+    // }
+
+    public class LogEntry {
+      public uint id1 { get; set; }
+      public uint id2 { get; set; }
+      public uint val1 { get; set; }
+      public uint val2 { get; set; }
+    }
+
+    public class Log {
+      public int idx { get; set; }
+      public List<LogEntry> mlog { get; set; }
+    }
+
+    private Log getLogEntries(){
       uint entries = 0;
       if(connect()){
         entries = dspDevice.ReadRegister(ENTRIES);
-        log.info($"reading {entries} log entries:");
         disconnect();
       }
+      List<LogEntry> mlog = new List<LogEntry>();
 
-      for(uint ii = 0; ii < entries; ii++){
-        handleLogEntry(ii);
+      for(int ii = 0; ii < entries; ii++){
+        addLogEntry(mlog, ii);
       }
+      var hurr = new Log();
+      hurr.mlog = mlog;
+      hurr.idx = 0;
+
+      return hurr;
+    }
+
+
+    private void addLogEntry(List<LogEntry> mlog, int idx){
+      if(connect()){
+
+        uint baseAddress = (uint)((idx*4*4) + LOG_BASE);
+
+        var m = new LogEntry();
+
+        m.id1 =  dspDevice.ReadRegister(baseAddress + 0);
+        m.id2 =  dspDevice.ReadRegister(baseAddress + 4);
+        m.val1 = dspDevice.ReadRegister(baseAddress + 8);
+        m.val2 = dspDevice.ReadRegister(baseAddress + 12);
+
+        mlog.Add(m);
+
+        disconnect();
+      }
+    }
+
+
+    public void parseLog(){
+      Log mlog = getLogEntries();
+
+      while(mlog.idx < mlog.mlog.Count){
+
+        var head = mlog.mlog[mlog.idx].id1;
+
+        if(head == (int)LogTags.STATE_EN_ELEC){
+          parseStateLog(mlog);
+        }
+        else if(head == (int)LogTags.DAC_STATE_CHANGE){
+          uint changedPair = mlog.mlog[mlog.idx].id2;
+          uint changedTo   = mlog.mlog[mlog.idx].val1;
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC state change");
+          if(changedTo == 0){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to IDLE"); }
+          if(changedTo == 1){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to PRIMED"); }
+          if(changedTo == 2){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to FIRING"); }
+
+          mlog.idx++;
+        }
+        else if(head == (int)LogTags.CONF){
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].val1} entered reset DAC pair");
+          mlog.idx++;
+        }
+
+        else if(head == (int)LogTags.CONF_START){
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} entered configure DAC pair with SG{mlog.mlog[mlog.idx].val1}");
+          mlog.idx++;
+        }
+
+        else if(head == (int)LogTags.TRIGGER){
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} was triggered");
+          mlog.idx++;
+        }
+
+        else if(head == (int)LogTags.BOOKING){
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} requested booking");
+          mlog.idx++;
+        }
+
+        else if(head == (int)LogTags.BOOKING_FOUND){
+          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} was granted booking with DAC pair {mlog.mlog[mlog.idx].val1}");
+          mlog.idx++;
+        }
+
+        else{
+          log.info($"\nLog entry {mlog.idx}");
+          log.info($"id1:      {lookupId(mlog.mlog[mlog.idx].id1)}");
+          log.info($"id2:      {lookupId(mlog.mlog[mlog.idx].id2)}");
+          log.info($"value1:   {mlog.mlog[mlog.idx].val1:X}");
+          log.info($"timestep: {mlog.mlog[mlog.idx].val2}\n");
+          mlog.idx++;
+        }
+      }
+    }
+
+    private void parseStateLog(Log mlog){
+      uint timestep = mlog.mlog[mlog.idx].val2;
+      log.info($"Log entry {mlog.idx} - DSP State at timestep {timestep}");
+
+      log.info($"enabled electrodes 0: {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"enabled electrodes 1: {mlog.mlog[mlog.idx++].val1:X}");
+
+      log.info($"dac select 1:         {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"dac select 2:         {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"dac select 3:         {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"dac select 4:         {mlog.mlog[mlog.idx++].val1:X}");
+
+      log.info($"mode select 1:        {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"mode select 2:        {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"mode select 3:        {mlog.mlog[mlog.idx++].val1:X}");
+      log.info($"mode select 4:        {mlog.mlog[mlog.idx++].val1:X}\n");
     }
   }
 }

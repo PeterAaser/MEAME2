@@ -145,7 +145,8 @@ namespace MEAME2
     }
 
     public void readDSPlog(){
-      dsp.readLog();
+      // dsp.readLog();
+      dsp.parseLog();
     }
 
     public void resetDebug(){
