@@ -19,7 +19,7 @@ namespace MEAME2
     void initDsp();
     bool executeDspFunc(DspFuncCall c);
     uint[] executeDspRead(RegReadRequest r);
-    void readDspLog();
+    void executeDspWrite(RegWriteRequest r);
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -120,10 +120,6 @@ namespace MEAME2
       this.dsp.uploadMeameBinary();
     }
 
-    public void readDspLog(){
-      // dsp.parseLog();
-    }
-
     public bool executeDspFunc(DspFuncCall c){
       DspOp<bool> exec = new CallDspFunc(c.func, c.argAddrs, c.argVals);
       return this.dspExecutor.execute(exec);
@@ -132,6 +128,11 @@ namespace MEAME2
     public uint[] executeDspRead(RegReadRequest r){
       DspOp<uint[]> exec = new ReadOp(r.addresses);
       return this.dspExecutor.execute(exec);
+    }
+
+    public void executeDspWrite(RegWriteRequest r){
+      DspOp<uint> exec = new WriteArgsOp(r.addresses, r.values);
+      this.dspExecutor.execute(exec);
     }
   }
 }

@@ -71,6 +71,21 @@ namespace MEAME2
 
 
   [Serializable]
+  public class RegWriteRequest {
+    public uint[] addresses { get; set; }
+    public uint[] values { get; set; }
+
+    public override string ToString(){
+      String r = "Register write request with values:\n";
+      for(int ii = 0; ii < addresses.Length; ii++){
+        r = r + $"0x{addresses[ii]:X} <- 0x{values[ii]:X}\n";
+      }
+      return r;
+    }
+  }
+
+
+  [Serializable]
   public class RegReadResponse {
     public uint[] addresses { get; set; }
     public uint[] values { get; set; }

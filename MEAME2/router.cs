@@ -43,10 +43,9 @@ namespace MEAME2
       Get["/DAQ/start"]          = _ => startDAQ();
       Get["/DAQ/stop"]           = _ => stopDAQ();
 
-      // Post["/DSP/barf"]          = _ => readDSPlog();
-
       Post["/DSP/call"]          = _ => callDspFunc();
       Post["/DSP/read"]          = _ => readDspRegs();
+      Post["/DSP/write"]         = _ => writeDspRegs();
     }
 
 
@@ -101,28 +100,32 @@ namespace MEAME2
       return 200;
     }
 
-    private dynamic readDspLog(){
-      log.info("reading log");
-      controller.readDspLog();
-      return 200;
-    }
-
     private dynamic connectDsp(){
       controller.initDsp();
       return 200;
     }
 
     private dynamic callDspFunc(){
+      log.info("got write req");
       DspFuncCall f = decode<DspFuncCall>(this.getJsonBody());
       controller.executeDspFunc(f);
-      log.info($"Executed dsp func call");
 
       return 200;
     }
 
     private dynamic readDspRegs(){
+      log.info("got write req");
       RegReadRequest r = decode<RegReadRequest>(this.getJsonBody());
       controller.executeDspRead(r);
+
+      return 200;
+    }
+
+    private dynamic writeDspRegs(){
+      log.info("got write req");
+      string body = this.getJsonBody();
+      RegWriteRequest r = decode<RegWriteRequest>(body);
+      controller.executeDspWrite(r);
 
       return 200;
     }

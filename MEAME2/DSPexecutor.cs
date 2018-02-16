@@ -58,7 +58,7 @@ namespace MEAME2
           log.err("DSP connection error");
         }
       }
-      ~DspConnection() {
+      public void close() {
         log.info("Running dsp conn destructor, disconnecting from device");
         dspDevice.Disconnect();
       }
@@ -77,11 +77,14 @@ namespace MEAME2
       for(int ii = 0; ii < ops.Length; ii++){
         ops[ii].run(conn);
       }
+      conn.close();
     }
 
     public T execute<T>(DspOp<T> op){
       DspConnection conn = new DspConnection();
-      return op.run(conn);
+      var r = op.run(conn);
+      conn.close();
+      return r;
     }
   }
 
@@ -95,10 +98,10 @@ namespace MEAME2
     public class DspConnection : DspExecutor {
 
       public DspConnection(){
-        log.info("Mock connection created");
+        log.msg("Mock connection created");
       }
-      ~DspConnection(){
-        log.info("Mock connection destroyed");
+      public void close(){
+        log.err("Mock connection destroyed");
       }
 
       public void write(uint address, uint word) {
@@ -116,11 +119,14 @@ namespace MEAME2
       for(int ii = 0; ii < ops.Length; ii++){
         ops[ii].run(conn);
       }
+      conn.close();
     }
 
     public T execute<T>(DspOp<T> op){
       DspConnection conn = new DspConnection();
-      return op.run(conn);
+      var r = op.run(conn);
+      conn.close();
+      return r;
     }
   }
 
@@ -159,6 +165,11 @@ namespace MEAME2
     public uint[] address { get; set; }
     public uint[] word { get; set; }
 
+    public WriteArgsOp(uint[] addresses, uint[] words){
+      address = addresses;
+      word = words;
+    }
+
     public uint run(DspExecutor ex){
       for (int ii = 0; ii < address.Length; ii++){
         ex.write(address[ii], word[ii]);
@@ -193,9 +204,8 @@ namespace MEAME2
     public CallDspFunc(uint call, uint[] argAddresses, uint[] vals){
       readNewest = new ReadNewestOp();
       this.call = new WriteFuncCall(call);
-      args = new WriteArgsOp();
-      args.address = argAddresses;
-      args.word = vals;
+      args = new WriteArgsOp(argAddresses, vals);
+
     }
 
     public bool run(DspExecutor ex){
