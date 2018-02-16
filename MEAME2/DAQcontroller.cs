@@ -15,6 +15,10 @@ namespace MEAME2
     public SampleSizeNet dataFormat { get; set; }
     public Action<Dictionary<int, int[]>, int> onChannelData { get; set; }
 
+    private int someCounter { get; set; }
+
+    private Random rnd { get; set; }
+
     public override String ToString(){
       return deviceInfo;
     }
@@ -37,20 +41,14 @@ namespace MEAME2
 
     public bool connectDataAcquisitionDevice(uint index){
 
-      this.dataFormat = SampleSizeNet.SampleSize32Signed;
+      this.rnd = new Random();
+      this.someCounter = 0;
 
-      if(dataAcquisitionDevice != null){
-        dataAcquisitionDevice.StopDacq();
-        dataAcquisitionDevice.Disconnect();
-        dataAcquisitionDevice.Dispose();
-        dataAcquisitionDevice = null;
-        throw new System.ArgumentException("Reached bad code path", "DAQ is null, mcs cruft");
-      }
+      this.dataFormat = SampleSizeNet.SampleSize32Signed;
 
       dataAcquisitionDevice = new CMeaDeviceNet(usblist.GetUsbListEntry(index).DeviceId.BusType,
                                                 _onChannelData,
                                                 onError);
-
 
       // The second arg refers to lock mask, allowing multiple device objects to be connected
       // to the same physical device. Yes, I know, what the fuck...
@@ -85,16 +83,15 @@ namespace MEAME2
       for (int i = 0; i < block/2; i++){ selectedChannels[i] = true; } // hurr
 
 
-      // *org [[file:killme.cs::/%20a%20device%20are%20read%20in%2032%20bit%20data%20format%20nChannels%20=%20ChannelsInBlock/2][documentation]]
       bool[] nChannels         = selectedChannels;
-      int queueSize            = 120000;
+      int queueSize            = 240000;
       int threshold            = segmentLength;
-      SampleSizeNet sampleSize = dataFormat;
-      int ChannelsInBlock      = block/2;
+      SampleSizeNet sampleSize = dataFormat;           // Signed32
+      int ChannelsInBlock      = block/2;              // 64
 
       dataAcquisitionDevice.SetSelectedChannelsQueue
         (nChannels,
-         queueSize, // huh?
+         queueSize,
          threshold,
          sampleSize,
          ChannelsInBlock);
@@ -128,17 +125,6 @@ namespace MEAME2
       DataModeEnumNet dataMode = dataAcquisitionDevice.GetDataMode(0);
 
 
-      /**
-      Summary:
-         Get the number of 16 bit datawords which will be collected per sample frame,
-         use after the device is configured.
-
-      Returns:
-         Number of 16 bit datawords per sample frame.
-         Returns 132 (66 32 bit words???)
-      */
-      int meme = dataAcquisitionDevice.GetChannelsInBlock();
-
       deviceInfo =
         "Data acquisition device connected to physical device with parameters: \n" +
         $"[SetSelectedChannelsQueue arguments:]\n" +
@@ -160,8 +146,7 @@ namespace MEAME2
         $"[Other..]\n" +
         $"valid data bits:    \t{validDataBits}\n" +    // 24
         $"device data format: \t{deviceDataFormat}\n" + // 32
-        $"device data mode:   \t{dataMode}\n" +         // dmSigned24bit
-        $"nice meme:          \t{meme}\n" +
+        $"device data mode:   \t{dataMode}\n" +         // dmSigned32bit
         "";
 
       return true;
@@ -177,6 +162,7 @@ namespace MEAME2
         int channelEntry = 0;
         int frames = 0;
 
+
         dataAcquisitionDevice.ChannelBlock_GetChannel
           (handle,
            channelEntry,
@@ -189,12 +175,24 @@ namespace MEAME2
            segmentLength,
            out returnedFrames);
 
+
+        // Every 40k samples should emit a print.
+        // if(this.someCounter > 40000){
+        //   this.someCounter = 0;
+        //   log.msg("someCounter rolled over 40k");
+        //   log.msg($"{returnedFrames}");
+        //   log.msg($"{data.Count}");
+        // }
+
+        // someCounter += returnedFrames;
+
+
         onChannelData(data, returnedFrames);
       }
       catch (Exception e){
         Console.ForegroundColor = ConsoleColor.Red;
         log.err("DAQ ERROR", "DAQ ");
-        Console.WriteLine(e);
+        log.err($"{e}");
         dataAcquisitionDevice.Disconnect();
         throw e;
       }

@@ -142,6 +142,10 @@ namespace MEAME2
   public class ReadOp : DspOp<uint[]> {
     public uint[] addresses { get; set; }
 
+    public ReadOp(uint[] addresses){
+      this.addresses = addresses;
+    }
+
     public uint[] run(DspExecutor ex){
       uint[] ret = new uint[addresses.Length];
       for (int ii = 0; ii < addresses.Length; ii++){

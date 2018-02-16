@@ -49,45 +49,6 @@ namespace MEAME2
       }
     }
 
-
-    public bool writeRegRequest(RegSetRequest regs){
-      bool succ = true;
-      for(int ii = 0; ii < regs.addresses.Length; ii++){
-        succ = (succ && writeReg(regs.addresses[ii], regs.values[ii]));
-      }
-      return succ;
-    }
-
-    public uint[] readRegRequest(RegReadRequest regs){
-      uint[] results = new uint[regs.addresses.Length];
-      for(int ii = 0; ii < regs.addresses.Length; ii++){
-        results[ii] = readReg(regs.addresses[ii]);
-      }
-      return results;
-    }
-
-
-    public uint[] readRegDirect(RegReadRequest regs){
-      uint[] results = new uint[regs.addresses.Length];
-      if(connect()){
-        for(int ii = 0; ii < regs.addresses.Length; ii++){
-          results[ii] = dspDevice.ReadRegister(regs.addresses[ii]);
-        }
-      }
-      disconnect();
-      log.info("reg direct successfully disconnected");
-      return results;
-    }
-
-    public bool stimRequest(BasicStimReq req){
-
-      basicStimTest(req.period);
-
-      return true;
-    }
-
-
-
     public bool uploadMeameBinary(){
 
       string FirmwareFile;

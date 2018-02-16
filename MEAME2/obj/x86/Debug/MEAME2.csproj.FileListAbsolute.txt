@@ -11,3 +11,9 @@ C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Newtonsoft.Json.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\Nancy.Hosting.Self.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.exe
 C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.pdb
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\MEAME2.exe.config
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\LanguageExt.Core.dll
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.Reactive.dll
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.ValueTuple.dll
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.Reactive.xml
+C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.ValueTuple.xml

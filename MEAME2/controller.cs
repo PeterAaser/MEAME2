@@ -15,17 +15,11 @@ namespace MEAME2
   {
     bool startServer();
     bool connectDAQ(DAQconfig d);
-    void initDSP();
     string getDevicesDescription();
-    bool setRegs(RegSetRequest r);
-    RegReadResponse readRegs(RegReadRequest r);
-    RegReadResponse readRegsDirect(RegReadRequest r);
-    void basicStimReq(BasicStimReq s);
-    void stimReq(StimReq s);
-    void readDSPlog();
-    void resetDebug();
-    void stimGroupReq(StimGroupReq s);
-    bool executeDSPfunc(DspFuncCall c);
+    void initDsp();
+    bool executeDspFunc(DspFuncCall c);
+    uint[] executeDspRead(RegReadRequest r);
+    void readDspLog();
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -122,52 +116,21 @@ namespace MEAME2
     }
 
 
-    public void initDSP(){
+    public void initDsp(){
       this.dsp.uploadMeameBinary();
     }
 
-    public bool setRegs(RegSetRequest r){
-      return this.dsp.writeRegRequest(r);
+    public void readDspLog(){
+      // dsp.parseLog();
     }
 
-    public RegReadResponse readRegs(RegReadRequest r){
-      RegReadResponse resp = new RegReadResponse();
-      resp.values = this.dsp.readRegRequest(r);
-      resp.addresses = r.addresses;
-      return resp;
-    }
-
-    public RegReadResponse readRegsDirect(RegReadRequest r){
-      RegReadResponse resp = new RegReadResponse();
-      resp.values = this.dsp.readRegDirect(r);
-      resp.addresses = r.addresses;
-      return resp;
-    }
-
-
-    public void basicStimReq(BasicStimReq s){
-      dsp.basicStimTest(s.period);
-    }
-
-    public void readDSPlog(){
-      dsp.parseLog();
-    }
-
-    public void resetDebug(){
-      dsp.resetDebug();
-    }
-
-
-    public void stimReq(StimReq s){
-      dsp.stimReq(s);
-    }
-
-    public void stimGroupReq(StimGroupReq s){
-      dsp.stimGroupReq(s);
-    }
-
-    public bool executeDSPfunc(DspFuncCall c){
+    public bool executeDspFunc(DspFuncCall c){
       DspOp<bool> exec = new CallDspFunc(c.func, c.argAddrs, c.argVals);
+      return this.dspExecutor.execute(exec);
+    }
+
+    public uint[] executeDspRead(RegReadRequest r){
+      DspOp<uint[]> exec = new ReadOp(r.addresses);
       return this.dspExecutor.execute(exec);
     }
   }

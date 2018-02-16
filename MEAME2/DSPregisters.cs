@@ -24,12 +24,14 @@ namespace MEAME2
   public partial class DSPComms {
 
     enum DspOps : uint {
-      READ             = 1,
-      WRITE            = 2,
-      DUMP             = 3,
-      RESET            = 4,
-      STIMPACK         = 5,
-      STIM_DEBUG       = 6
+      READ                = 1,
+      WRITE               = 2,
+      DUMP                = 3,
+      RESET               = 4,
+      STIMPACK            = 5,
+      STIM_DEBUG          = 6,
+      START_STIM_QUEUE    = 7,
+      STOP_STIM_QUEUE     = 8
     };
 
     enum LogTags : uint {
@@ -159,14 +161,14 @@ namespace MEAME2
     static uint STIM_BASE               = 0x9000;
     static uint TRIGGER_CTRL_BASE       = 0x0200;
 
-    public void resetDebug(){
-      if(connect()){
-        for(uint ii = 0; ii < 0xFFC; ii+=4){
-          dspDevice.WriteRegister(MAIL_BASE + ii, 0x0);
-        }
-        disconnect();
-      }
-    }
+    // public void resetDebug(){
+    //   if(connect()){
+    //     for(uint ii = 0; ii < 0xFFC; ii+=4){
+    //       dspDevice.WriteRegister(MAIL_BASE + ii, 0x0);
+    //     }
+    //     disconnect();
+    //   }
+    // }
 
 
     private string lookupId(uint id){
@@ -210,116 +212,116 @@ namespace MEAME2
       public List<LogEntry> mlog { get; set; }
     }
 
-    private Log getLogEntries(){
-      uint entries = 0;
-      if(connect()){
-        entries = dspDevice.ReadRegister(ENTRIES);
-        disconnect();
-      }
-      List<LogEntry> mlog = new List<LogEntry>();
+    // private Log getLogEntries(){
+    //   uint entries = 0;
+    //   if(connect()){
+    //     entries = dspDevice.ReadRegister(ENTRIES);
+    //     disconnect();
+    //   }
+    //   List<LogEntry> mlog = new List<LogEntry>();
 
-      for(int ii = 0; ii < entries; ii++){
-        addLogEntry(mlog, ii);
-      }
-      var hurr = new Log();
-      hurr.mlog = mlog;
-      hurr.idx = 0;
+    //   for(int ii = 0; ii < entries; ii++){
+    //     addLogEntry(mlog, ii);
+    //   }
+    //   var hurr = new Log();
+    //   hurr.mlog = mlog;
+    //   hurr.idx = 0;
 
-      return hurr;
-    }
-
-
-    private void addLogEntry(List<LogEntry> mlog, int idx){
-      if(connect()){
-
-        uint baseAddress = (uint)((idx*4*4) + LOG_BASE);
-
-        var m = new LogEntry();
-
-        m.id1 =  dspDevice.ReadRegister(baseAddress + 0);
-        m.id2 =  dspDevice.ReadRegister(baseAddress + 4);
-        m.val1 = dspDevice.ReadRegister(baseAddress + 8);
-        m.val2 = dspDevice.ReadRegister(baseAddress + 12);
-
-        mlog.Add(m);
-
-        disconnect();
-      }
-    }
+    //   return hurr;
+    // }
 
 
-    public void parseLog(){
-      Log mlog = getLogEntries();
+  //   private void addLogEntry(List<LogEntry> mlog, int idx){
+  //     if(connect()){
 
-      while(mlog.idx < mlog.mlog.Count){
+  //       uint baseAddress = (uint)((idx*4*4) + LOG_BASE);
 
-        var head = mlog.mlog[mlog.idx].id1;
+  //       var m = new LogEntry();
 
-        if(head == (int)LogTags.STATE_EN_ELEC){
-          parseStateLog(mlog);
-        }
-        else if(head == (int)LogTags.DAC_STATE_CHANGE){
-          uint changedPair = mlog.mlog[mlog.idx].id2;
-          uint changedTo   = mlog.mlog[mlog.idx].val1;
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC state change");
-          if(changedTo == 0){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to IDLE"); }
-          if(changedTo == 1){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to PRIMED"); }
-          if(changedTo == 2){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to FIRING"); }
+  //       m.id1 =  dspDevice.ReadRegister(baseAddress + 0);
+  //       m.id2 =  dspDevice.ReadRegister(baseAddress + 4);
+  //       m.val1 = dspDevice.ReadRegister(baseAddress + 8);
+  //       m.val2 = dspDevice.ReadRegister(baseAddress + 12);
 
-          mlog.idx++;
-        }
-        else if(head == (int)LogTags.CONF){
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].val1} entered reset DAC pair");
-          mlog.idx++;
-        }
+  //       mlog.Add(m);
 
-        else if(head == (int)LogTags.CONF_START){
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} entered configure DAC pair with SG{mlog.mlog[mlog.idx].val1}");
-          mlog.idx++;
-        }
+  //       disconnect();
+  //     }
+  //   }
 
-        else if(head == (int)LogTags.TRIGGER){
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} was triggered");
-          mlog.idx++;
-        }
 
-        else if(head == (int)LogTags.BOOKING){
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} requested booking");
-          mlog.idx++;
-        }
+  //   public void parseLog(){
+  //     Log mlog = getLogEntries();
 
-        else if(head == (int)LogTags.BOOKING_FOUND){
-          log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} was granted booking with DAC pair {mlog.mlog[mlog.idx].val1}");
-          mlog.idx++;
-        }
+  //     while(mlog.idx < mlog.mlog.Count){
 
-        else{
-          log.info($"\nLog entry {mlog.idx}");
-          log.info($"id1:      {lookupId(mlog.mlog[mlog.idx].id1)}");
-          log.info($"id2:      {lookupId(mlog.mlog[mlog.idx].id2)}");
-          log.info($"value1:   {mlog.mlog[mlog.idx].val1:X}");
-          log.info($"timestep: {mlog.mlog[mlog.idx].val2}\n");
-          mlog.idx++;
-        }
-      }
-    }
+  //       var head = mlog.mlog[mlog.idx].id1;
 
-    private void parseStateLog(Log mlog){
-      uint timestep = mlog.mlog[mlog.idx].val2;
-      log.info($"Log entry {mlog.idx} - DSP State at timestep {timestep}");
+  //       if(head == (int)LogTags.STATE_EN_ELEC){
+  //         parseStateLog(mlog);
+  //       }
+  //       else if(head == (int)LogTags.DAC_STATE_CHANGE){
+  //         uint changedPair = mlog.mlog[mlog.idx].id2;
+  //         uint changedTo   = mlog.mlog[mlog.idx].val1;
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC state change");
+  //         if(changedTo == 0){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to IDLE"); }
+  //         if(changedTo == 1){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to PRIMED"); }
+  //         if(changedTo == 2){ log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {changedPair} changed state to FIRING"); }
 
-      log.info($"enabled electrodes 0: {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"enabled electrodes 1: {mlog.mlog[mlog.idx++].val1:X}");
+  //         mlog.idx++;
+  //       }
+  //       else if(head == (int)LogTags.CONF){
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].val1} entered reset DAC pair");
+  //         mlog.idx++;
+  //       }
 
-      log.info($"dac select 1:         {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"dac select 2:         {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"dac select 3:         {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"dac select 4:         {mlog.mlog[mlog.idx++].val1:X}");
+  //       else if(head == (int)LogTags.CONF_START){
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} entered configure DAC pair with SG{mlog.mlog[mlog.idx].val1}");
+  //         mlog.idx++;
+  //       }
 
-      log.info($"mode select 1:        {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"mode select 2:        {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"mode select 3:        {mlog.mlog[mlog.idx++].val1:X}");
-      log.info($"mode select 4:        {mlog.mlog[mlog.idx++].val1:X}\n");
-    }
+  //       else if(head == (int)LogTags.TRIGGER){
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tDAC pair {mlog.mlog[mlog.idx].id2} was triggered");
+  //         mlog.idx++;
+  //       }
+
+  //       else if(head == (int)LogTags.BOOKING){
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} requested booking");
+  //         mlog.idx++;
+  //       }
+
+  //       else if(head == (int)LogTags.BOOKING_FOUND){
+  //         log.info($"Log entry {mlog.idx}\tAt timestep {mlog.mlog[mlog.idx].val2}\tSG{mlog.mlog[mlog.idx].id2} was granted booking with DAC pair {mlog.mlog[mlog.idx].val1}");
+  //         mlog.idx++;
+  //       }
+
+  //       else{
+  //         log.info($"\nLog entry {mlog.idx}");
+  //         log.info($"id1:      {lookupId(mlog.mlog[mlog.idx].id1)}");
+  //         log.info($"id2:      {lookupId(mlog.mlog[mlog.idx].id2)}");
+  //         log.info($"value1:   {mlog.mlog[mlog.idx].val1:X}");
+  //         log.info($"timestep: {mlog.mlog[mlog.idx].val2}\n");
+  //         mlog.idx++;
+  //       }
+  //     }
+  //   }
+
+  //   private void parseStateLog(Log mlog){
+  //     uint timestep = mlog.mlog[mlog.idx].val2;
+  //     log.info($"Log entry {mlog.idx} - DSP State at timestep {timestep}");
+
+  //     log.info($"enabled electrodes 0: {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"enabled electrodes 1: {mlog.mlog[mlog.idx++].val1:X}");
+
+  //     log.info($"dac select 1:         {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"dac select 2:         {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"dac select 3:         {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"dac select 4:         {mlog.mlog[mlog.idx++].val1:X}");
+
+  //     log.info($"mode select 1:        {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"mode select 2:        {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"mode select 3:        {mlog.mlog[mlog.idx++].val1:X}");
+  //     log.info($"mode select 4:        {mlog.mlog[mlog.idx++].val1:X}\n");
+  //   }
   }
 }

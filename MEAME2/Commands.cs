@@ -17,19 +17,6 @@ namespace MEAME2
 
 
   [Serializable]
-  public class StimReq{
-    public int[] periods { get; set; }
-    // public int[] electrodes { get; set; }
-  }
-
-
-  [Serializable]
-  public class BasicStimReq{
-    public int period { get; set; }
-  }
-
-
-  [Serializable]
   public class DAQconfig {
     public int samplerate { get; set; }
     public int segmentLength { get; set; }
@@ -62,36 +49,11 @@ namespace MEAME2
 
 
   [Serializable]
-  public class StimGroupReq {
-    public int channel { get; set; }
-    public List<int> electrodes { get; set; }
-    public int period { get; set; }
-  }
-
-
-  [Serializable]
   public class DspFuncCall {
     public uint func { get; set; }
     public uint[] argAddrs { get; set; }
     public uint[] argVals { get; set; }
   }
-
-
-  [Serializable]
-  public class RegSetRequest {
-    public uint[] addresses { get; set; }
-    public uint[] values { get; set; }
-
-    public override string ToString(){
-      String r = "Register set request with values:\n";
-      for(int ii = 0; ii < values.Length; ii++){
-        r = r + $"{addresses[ii]:X}\t<-{values[ii]:X}\n";
-      }
-      return r;
-    }
-  }
-
-
 
 
   [Serializable]
