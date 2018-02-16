@@ -62,6 +62,22 @@ namespace MEAME2
 
 
   [Serializable]
+  public class StimGroupReq {
+    public int channel { get; set; }
+    public List<int> electrodes { get; set; }
+    public int period { get; set; }
+  }
+
+
+  [Serializable]
+  public class DspFuncCall {
+    public uint func { get; set; }
+    public uint[] argAddrs { get; set; }
+    public uint[] argVals { get; set; }
+  }
+
+
+  [Serializable]
   public class RegSetRequest {
     public uint[] addresses { get; set; }
     public uint[] values { get; set; }
@@ -74,6 +90,8 @@ namespace MEAME2
       return r;
     }
   }
+
+
 
 
   [Serializable]

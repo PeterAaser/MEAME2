@@ -16,3 +16,8 @@
    far from a priority.
 
 * DSP
+
+* omnisharp spacemacs
+  kjør
+  cp -r ~/.emacs.d/.cache/omnisharp/server/v1.2[newest]/ ~/bin/netcoreapp1.1/
+  endre run til OmniSharp

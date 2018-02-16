@@ -24,6 +24,8 @@ namespace MEAME2
     void stimReq(StimReq s);
     void readDSPlog();
     void resetDebug();
+    void stimGroupReq(StimGroupReq s);
+    bool executeDSPfunc(DspFuncCall c);
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -36,6 +38,7 @@ namespace MEAME2
     private bool              DAQconfigured;
     private bool              DAQrunning;
     private bool              dspConfigured = false;
+    private Executor          dspExecutor;
 
     private String[] devices;
 
@@ -48,6 +51,8 @@ namespace MEAME2
       this.DAQconfigured = false;
       this.DAQrunning = false;
       this.dsp = new DSPComms();
+
+      this.dspExecutor = new MockExecutor();
     }
 
 
@@ -145,7 +150,6 @@ namespace MEAME2
     }
 
     public void readDSPlog(){
-      // dsp.readLog();
       dsp.parseLog();
     }
 
@@ -156,6 +160,15 @@ namespace MEAME2
 
     public void stimReq(StimReq s){
       dsp.stimReq(s);
+    }
+
+    public void stimGroupReq(StimGroupReq s){
+      dsp.stimGroupReq(s);
+    }
+
+    public bool executeDSPfunc(DspFuncCall c){
+      DspOp<bool> exec = new CallDspFunc(c.func, c.argAddrs, c.argVals);
+      return this.dspExecutor.execute(exec);
     }
   }
 }

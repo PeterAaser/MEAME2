@@ -48,10 +48,13 @@ namespace MEAME2
       Post["/DSP/readreg"]       = _ => readRegs();
 
       Post["/DSP/stimreq"]       = _ => stimReq();
+      Post["/DSP/stimGroupReq"]  = _ => stimGroupReq();
       Post["/DSP/stimtest"]      = _ => stimTest();
 
       Post["/DSP/barf"]          = _ => readDSPlog();
       Post["/DSP/reset_debug"]   = _ => resetDebug();
+
+      Post["/DSP/call"]          = _ => callDspFunc();
     }
 
 
@@ -203,7 +206,7 @@ namespace MEAME2
     }
 
     private dynamic stimReq(){
-      log.info("got stim req");
+      // log.info("got stim req");
       try {
         string body = this.getJsonBody();
         StringReader memeReader = new StringReader(body);
@@ -211,14 +214,26 @@ namespace MEAME2
         JsonSerializer serializer = new JsonSerializer();
         StimReq r = serializer.Deserialize<StimReq>(memer);
 
-        controller.stimReq(r);
+      }
+      catch (Exception e){
+        log.err("read regs malformed request");
+        Console.WriteLine(e);
+        return 500;
+      }
+      // log.ok("stim applied successful");
+      return 200;
+    }
 
-        log.info($"Got stim req {r.periods[0]}");
-        log.info($"Got stim req {r.periods[1]}");
-        log.info($"Got stim req {r.periods[2]}");
-        log.info($"Got stim req {r.periods[3]}");
-        log.info($"");
-        log.info($"");
+    private dynamic stimGroupReq(){
+      log.info("got stim req group");
+      try {
+        string body = this.getJsonBody();
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        StimGroupReq r = serializer.Deserialize<StimGroupReq>(memer);
+
+        controller.stimGroupReq(r);
 
       }
       catch (Exception e){
@@ -229,6 +244,7 @@ namespace MEAME2
       log.ok("stim applied successful");
       return 200;
     }
+
 
     private dynamic simpleStimReq(){
       log.info("Got request for setting DSP stim");
@@ -275,6 +291,27 @@ namespace MEAME2
 
     private dynamic connectDSP(){
       controller.initDSP();
+      return 200;
+    }
+
+    private dynamic callDspFunc(){
+      try {
+        string body = this.getJsonBody();
+        StringReader memeReader = new StringReader(body);
+        JsonTextReader memer = new JsonTextReader(memeReader);
+        JsonSerializer serializer = new JsonSerializer();
+        DspFuncCall r = serializer.Deserialize<DspFuncCall>(memer);
+
+        controller.executeDSPfunc(r);
+
+        log.info($"Executed dsp func call");
+
+      }
+      catch (Exception e){
+        log.err("dsp func call malformed request");
+        Console.WriteLine(e);
+        return 500;
+      }
       return 200;
     }
   }
