@@ -20,6 +20,7 @@ namespace MEAME2
     private CMcsUsbFactoryNet dspDevice;
     private uint requestID = 0;
     public bool connected = false;
+    public bool flashed = false;
     private uint lockMask = 64;
     public bool meameBinaryUploaded = false;
 
@@ -70,6 +71,9 @@ namespace MEAME2
       log.ok("Binary uploaded, reconnecting device...");
 
       Thread.Sleep(100);
+
+      //if we got this far it probably works...
+      this.flashed = true;
 
       return true;
     }

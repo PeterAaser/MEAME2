@@ -37,20 +37,25 @@ namespace MEAME2
       this.controller = controller;
 
       Get["/"] = _ => "hello this is MEAME.";
-      Post["/logmsg"] = _ => logmsg();
 
       Post["/DAQ/connect"]       = _ => connectDAQ();
       Get["/DAQ/start"]          = _ => startDAQ();
       Get["/DAQ/stop"]           = _ => stopDAQ();
 
+      Get["/status"]             = _ => status();
+
+      Get["/DSP/flash"]         = _ => flashDsp();
       Post["/DSP/call"]          = _ => callDspFunc();
       Post["/DSP/read"]          = _ => readDspRegs();
       Post["/DSP/write"]         = _ => writeDspRegs();
+
+      Post["/aux/logmsg"]        = _ => logmsg();
     }
 
 
     private dynamic status(){
-      return 200;
+      string output = JsonConvert.SerializeObject(controller.getMEAMEstatus());
+      return respondJsonOk(output);
     }
 
     private dynamic logmsg(){
@@ -72,9 +77,6 @@ namespace MEAME2
 
       if (connect){
         log.ok("DAQ connected");
-        log.ok("initializing DSP");
-        controller.initDsp();
-
         return 200;
       }
       else{
@@ -100,25 +102,28 @@ namespace MEAME2
       return 200;
     }
 
-    private dynamic connectDsp(){
-      controller.initDsp();
+    private dynamic flashDsp(){
+      controller.flashDsp();
       return 200;
     }
 
     private dynamic callDspFunc(){
       log.info("got write req");
       DspFuncCall f = decode<DspFuncCall>(this.getJsonBody());
-      controller.executeDspFunc(f);
 
-      return 200;
+      if(controller.executeDspFunc(f))
+        return 200;
+      else
+        return 500;
     }
 
     private dynamic readDspRegs(){
       log.info("got write req");
       RegReadRequest r = decode<RegReadRequest>(this.getJsonBody());
-      controller.executeDspRead(r);
+      var reads = controller.executeDspRead(r);
 
-      return 200;
+      string output = JsonConvert.SerializeObject(reads);
+      return respondJsonOk(output);
     }
 
     private dynamic writeDspRegs(){
@@ -146,7 +151,20 @@ namespace MEAME2
       JsonTextReader memer = new JsonTextReader(memeReader);
       JsonSerializer serializer = new JsonSerializer();
       T r = serializer.Deserialize<T>(memer);
+      if(r == null){
+        log.err("deserialize error");
+      }
       return r;
+    }
+
+
+    private Response respondJsonOk(string resp){
+      var raw = Encoding.UTF8.GetBytes(resp);
+      return new Response
+      {
+        ContentType = "application/json",
+        Contents = s => s.Write(raw, 0, raw.Length)
+      };
     }
   }
 }

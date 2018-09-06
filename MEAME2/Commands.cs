@@ -23,7 +23,16 @@ namespace MEAME2
   }
 
 
+  [Serializable]
+  public class MEAMEstatus {
+    public bool isAlive { get; set; }
+    public bool dspAlive { get; set; }
+  }
+
+
   /**
+     TODO: I think this is outdated hard
+
      Should contain 4 lists, each sublist containing two sublists (uint to be precise,
      but view the uint as a List<bool> and it makes sense)
 

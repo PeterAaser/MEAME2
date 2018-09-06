@@ -25,8 +25,22 @@ namespace MEAME2
     public static bool connected = false;
     private static uint lockMask = 64;
 
+
+    public static uint MAIL_BASE = 0x1000;
+
+    public static uint SLAVE_INSTRUCTION_ID  = (MAIL_BASE + 0x0);
+    public static uint MASTER_INSTRUCTION_ID = (MAIL_BASE + 0x4);
+    public static uint INSTRUCTION_TYPE      = (MAIL_BASE + 0x8);
+
+    public static uint STIM_BASE               = 0x9000;
+    public static uint TRIGGER_CTRL_BASE       = 0x0200;
+
+
     public LiveExecutor()
     {
+      log.info("LIVE DSP EXECUTOR CREATED");
+      log.info("ALL DSP CALLS WILL BE INVOKED ON THE DSP");
+      log.info("THE FORECAST IS LIGHT SYSTEM FAILURE WITH HIGH CHANCE OF PLEASE POWERCYCLE THE DEVICE");
       dspDevice = new CMcsUsbFactoryNet();
       dspDevice.EnableExceptions(true);
       usblist.Initialize(DeviceEnumNet.MCS_MEAUSB_DEVICE); // Get list of MEA devices connect by USB
@@ -54,21 +68,25 @@ namespace MEAME2
     public class DspConnection : DspExecutor {
 
       public DspConnection() {
+        log.msg("Connecting to dsp");
         if(dspDevice.Connect(dspPort, lockMask) != 0){
           log.err("DSP connection error");
         }
       }
       public void close() {
-        log.info("Running dsp conn destructor, disconnecting from device");
+        log.err("Disconnecting from dsp");
         dspDevice.Disconnect();
       }
 
       public void write(uint address, uint word) {
+        log.info($"live executor writing:\0x{address:X} <- {word:X}");
         dspDevice.WriteRegister(address, word);
       }
 
       public uint read(uint address) {
-        return dspDevice.ReadRegister(address);
+        var regWord = dspDevice.ReadRegister(address);
+        log.info($"live executor reading: 0x{address:X} which contained 0x{regWord}");
+        return regWord;
       }
     }
 
@@ -92,10 +110,13 @@ namespace MEAME2
   public class MockExecutor : Executor {
 
     public MockExecutor(){
-      log.info("created mock executor");
+      log.info("MOCK EXECUTOR SELECTED");
+      log.info("DSP CALLS WILL NOT BE INVOKED ON DSP");
     }
 
     public class DspConnection : DspExecutor {
+
+      uint top = 0;
 
       public DspConnection(){
         log.msg("Mock connection created");
@@ -110,6 +131,9 @@ namespace MEAME2
 
       public uint read(uint address) {
         log.info($"mock read from 0x{address:X}");
+        if(address == 0x1000){
+          return top++;
+        }
         return 0;
       }
     }
@@ -180,7 +204,7 @@ namespace MEAME2
 
   public class ReadNewestOp : DspOp<uint> {
     public uint run(DspExecutor ex){
-      return ex.read(0x200);
+      return ex.read(LiveExecutor.SLAVE_INSTRUCTION_ID);
     }
   }
 
@@ -190,7 +214,7 @@ namespace MEAME2
       this.call = call;
     }
     public uint run(DspExecutor ex){
-      ex.write(0x204, call);
+      ex.write(LiveExecutor.INSTRUCTION_TYPE, call);
       return 0;
     }
   }
@@ -212,6 +236,7 @@ namespace MEAME2
       uint oldTop = readNewest.run(ex);
       args.run(ex);
       call.run(ex);
+      ex.write(LiveExecutor.MASTER_INSTRUCTION_ID, oldTop + 1);
       uint newTop = readNewest.run(ex);
       if((oldTop + 1) == newTop){
         return true;
@@ -222,6 +247,7 @@ namespace MEAME2
         if((oldTop + 1) == newTop){
           return true;
         }
+        log.err($"dsp call failure. oldTop was {oldTop}, newTop was {newTop}");
         return false;
       }
     }

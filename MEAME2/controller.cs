@@ -16,10 +16,12 @@ namespace MEAME2
     bool startServer();
     bool connectDAQ(DAQconfig d);
     string getDevicesDescription();
-    void initDsp();
+    void flashDsp();
     bool executeDspFunc(DspFuncCall c);
-    uint[] executeDspRead(RegReadRequest r);
+    RegReadResponse executeDspRead(RegReadRequest r);
     void executeDspWrite(RegWriteRequest r);
+    MEAMEstatus getMEAMEstatus();
+
   }
 
   public class MEAMEcontrol : IMEAMEcontrol
@@ -46,7 +48,8 @@ namespace MEAME2
       this.DAQrunning = false;
       this.dsp = new DSPComms();
 
-      this.dspExecutor = new MockExecutor();
+      // this.dspExecutor = new MockExecutor();
+      this.dspExecutor = new LiveExecutor();
     }
 
 
@@ -65,6 +68,14 @@ namespace MEAME2
           + usblist.GetUsbListEntry(ii).SerialNumber;
       }
       this.devices = devices;
+    }
+
+
+    public MEAMEstatus getMEAMEstatus(){
+      return new MEAMEstatus{
+        isAlive = this.DAQrunning,
+        dspAlive = this.dsp.connected,
+      };
     }
 
 
@@ -116,7 +127,7 @@ namespace MEAME2
     }
 
 
-    public void initDsp(){
+    public void flashDsp(){
       this.dsp.uploadMeameBinary();
     }
 
@@ -125,9 +136,13 @@ namespace MEAME2
       return this.dspExecutor.execute(exec);
     }
 
-    public uint[] executeDspRead(RegReadRequest r){
+    public RegReadResponse executeDspRead(RegReadRequest r){
       DspOp<uint[]> exec = new ReadOp(r.addresses);
-      return this.dspExecutor.execute(exec);
+      uint[] reads = this.dspExecutor.execute(exec);
+      return new RegReadResponse{
+        addresses = r.addresses,
+        values = reads
+      };
     }
 
     public void executeDspWrite(RegWriteRequest r){

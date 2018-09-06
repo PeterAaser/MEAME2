@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Collections.Generic;
 
 using Mcs.Usb;
@@ -13,10 +14,9 @@ namespace MEAME2
     static int mChannelHandles { get; set; }
     static int hwchannels { get; set; }
     public SampleSizeNet dataFormat { get; set; }
-    public Action<Dictionary<int, int[]>, int> onChannelData { get; set; }
+    public Action<int[],int> onChannelData { get; set; }
 
     private int someCounter { get; set; }
-
     private Random rnd { get; set; }
 
     public override String ToString(){
@@ -55,6 +55,7 @@ namespace MEAME2
       dataAcquisitionDevice.Connect(usblist.GetUsbListEntry(index), 1);
       dataAcquisitionDevice.SendStop();
 
+      // Get number of hw channels the device supports
       int what = 0;
       dataAcquisitionDevice.HWInfo().GetNumberOfHWADCChannels(out what);
       hwchannels = what;
@@ -79,17 +80,17 @@ namespace MEAME2
         GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(out voltageranges);
 
 
-      bool[] selectedChannels = new bool[block/2];
-      for (int i = 0; i < block/2; i++){ selectedChannels[i] = true; } // hurr
+      bool[] selectedChannels = new bool[block*2];
+      for (int i = 0; i < block*2; i++){ selectedChannels[i] = true; } // hurr
 
 
       bool[] nChannels         = selectedChannels;
-      int queueSize            = 240000;
+      int queueSize            = 640000;
       int threshold            = segmentLength;
       SampleSizeNet sampleSize = dataFormat;           // Signed32
-      int ChannelsInBlock      = block/2;              // 64
+      int ChannelsInBlock      = block;                // 64
 
-      dataAcquisitionDevice.SetSelectedChannelsQueue
+      dataAcquisitionDevice.SetSelectedData
         (nChannels,
          queueSize,
          threshold,
@@ -104,6 +105,7 @@ namespace MEAME2
 
       int validDataBits = -1;
       int deviceDataFormat = -1;
+
 
       /**
       Summary:
@@ -123,7 +125,6 @@ namespace MEAME2
                                           out deviceDataFormat);
 
       DataModeEnumNet dataMode = dataAcquisitionDevice.GetDataMode(0);
-
 
       deviceInfo =
         "Data acquisition device connected to physical device with parameters: \n" +
@@ -163,31 +164,20 @@ namespace MEAME2
         int frames = 0;
 
 
-        dataAcquisitionDevice.ChannelBlock_GetChannel
-          (handle,
-           channelEntry,
-           out totalChannels,
-           out offset,
-           out channels);
+        // dataAcquisitionDevice.ChannelBlock_GetChannel
+        //   (handle,
+        //    channelEntry,
+        //    out totalChannels,
+        //    out offset,
+        //    out channels);
 
-        Dictionary<int,int[]> data = dataAcquisitionDevice.ChannelBlock_ReadFramesDictI32
+        int[] buf = dataAcquisitionDevice.ChannelBlock_ReadFramesI32
           (handle,
            segmentLength,
            out returnedFrames);
 
+        onChannelData(buf, returnedFrames);
 
-        // Every 40k samples should emit a print.
-        // if(this.someCounter > 40000){
-        //   this.someCounter = 0;
-        //   log.msg("someCounter rolled over 40k");
-        //   log.msg($"{returnedFrames}");
-        //   log.msg($"{data.Count}");
-        // }
-
-        // someCounter += returnedFrames;
-
-
-        onChannelData(data, returnedFrames);
       }
       catch (Exception e){
         Console.ForegroundColor = ConsoleColor.Red;

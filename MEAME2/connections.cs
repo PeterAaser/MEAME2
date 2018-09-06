@@ -29,15 +29,26 @@ namespace MEAME2
     //           Array DESTINATION,
     //           int DESTINATION OFFSET IN BYTES,
     //           int BYTES TO COPY
-    public void OnChannelData(Dictionary<int, int[]> data, int returnedFrames){
+    // public void OnChannelData(Dictionary<int, int[]> data, int returnedFrames){
+    public void OnChannelData(int[] data, int returnedFrames){
+
+      int[] reordered = new int[returnedFrames*60];
 
       if(ChannelListeners.Any()){
         byte[] sendBuffer = new byte[returnedFrames * 60 * 4];
-        for (int ii = 0; ii < 60; ii++){
 
-          int byteOffset = ii*returnedFrames*4;
-          Buffer.BlockCopy(data[ii], 0, sendBuffer, byteOffset, returnedFrames*4);
+        for(int ii = 0; ii < 60; ii++){
+
+          int reorderedOffset = ii*returnedFrames;
+          int rawStride = 64;
+          int rawOffset = ii;
+
+          for(int kk = 0; kk < returnedFrames; kk++){
+            reordered[reorderedOffset + kk] = data[rawOffset + rawStride*kk];
+          }
         }
+
+        Buffer.BlockCopy(reordered, 0, sendBuffer, 0, returnedFrames*4*60);
 
         /**
            Send data to listeners of all channels
@@ -80,13 +91,20 @@ namespace MEAME2
         int slope = (ii%20) + 1;
         int byteOffset = ii*returnedFrames*4;
 
-        // adds sawtooth waves (obv)
-        int startPoint = (int)((absPoint*slope) % (2*channelMax));
-        for(int jj = 0; jj < returnedFrames; jj++){
+        if(ii == 14){
+          for(int jj = 0; jj < returnedFrames; jj++){
+            waveform[jj + waveformIdxOffset] = 0;
+          }
+        }
+        else{
+          // adds sawtooth waves (obv)
+          int startPoint = (int)((absPoint*slope) % (2*channelMax));
+          for(int jj = 0; jj < returnedFrames; jj++){
 
-          int point = (startPoint + (jj*slope)) % (2*channelMax);
+            int point = (startPoint + (jj*slope)) % (2*channelMax);
 
-          waveform[jj + waveformIdxOffset] = point - channelMax;
+            waveform[jj + waveformIdxOffset] = point - channelMax;
+          }
         }
       }
       Buffer.BlockCopy(waveform, 0, sendBuffer, 0, returnedFrames*4*60);
