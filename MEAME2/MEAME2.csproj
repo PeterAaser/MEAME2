@@ -62,8 +62,6 @@
   <ItemGroup>
     <Compile Include="DSPcomms.cs" />
     <Compile Include="DSPexecutor.cs" />
-    <Compile Include="DSPregisters.cs" />
-    <Compile Include="DSPRoutines.cs" />
     <Compile Include="logspam.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

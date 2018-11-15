@@ -30,33 +30,6 @@ namespace MEAME2
   }
 
 
-  /**
-     TODO: I think this is outdated hard
-
-     Should contain 4 lists, each sublist containing two sublists (uint to be precise,
-     but view the uint as a List<bool> and it makes sense)
-
-     Example (for the two first elements of top level list)
-     SG: Stimulus group (see DSP code, basically a logical group of electrodes)
-
-     +-------------------------------------+----------------------------------------+
-     |stimSites[0]                         |  stimSites[1]                          |
-     +-----------------+-------------------+--------------------+-------------------+
-     |stimSites[0][0]  | stimSites[0][1]   |  stimSites[0][0]   | stimSites[0][1]   |
-     +-----------------+-------------------+--------------------+-------------------+
-     |SG0 electrode 0  | SG0 electrode 30  |  SG1  electrode 0  | SG1 electrode 30  |
-     |SG0 electrode 1  | SG0 electrode 31  |  SG1  electrode 1  | SG1 electrode 31  |
-     |SG0 electrode 2  | SG0 electrode 32  |  SG1  electrode 2  | SG1 electrode 32  |
-     |...              | ...               |  ...               | ...               |
-     |SG0 electrode 29 | SG0 electrode 59  |  SG1  electrode 29 | SG1 electrode 59  |
-     +-----------------+-------------------+--------------------+-------------------+
-   */
-  [Serializable]
-  public class DSPconfig {
-    public List<List<uint>> stimSites { get; set; }
-  }
-
-
   [Serializable]
   public class DspFuncCall {
     public uint func { get; set; }
