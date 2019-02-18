@@ -12,7 +12,7 @@ namespace MEAME2
 {
   public class ChannelServer {
 
-    private static string ipstring = "129.241.201.110";
+    private static string ipstring = "0.0.0.0";
     private ConnectionManager cm;
     private static int ChannelsPort = 12340;
     private static int SawToothPort = 12341;

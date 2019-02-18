@@ -30,6 +30,15 @@ namespace MEAME2
       Console.ResetColor();
     }
 
+    static int hasLogged = 0;
 
+    public static void infoOnce(String s, String id = ""){
+      if(hasLogged == 0){
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"[{id}Info]: {s}");
+        Console.ResetColor();
+	hasLogged = 1;
+      }
+    }
   }
 }

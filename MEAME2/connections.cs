@@ -23,6 +23,7 @@ namespace MEAME2
 
     private long periodCounter = 0;
 
+		private bool hasLogged = false;
 
     // BlockCopy(Array SOURCE,
     //           int SOURCE OFFSET IN BYTES,
@@ -37,16 +38,46 @@ namespace MEAME2
       if(ChannelListeners.Any()){
         byte[] sendBuffer = new byte[returnedFrames * 60 * 4];
 
-        for(int ii = 0; ii < 60; ii++){
+        for(int channelNo = 0; channelNo < 60; channelNo++){
 
-          int reorderedOffset = ii*returnedFrames;
+          int reorderedOffset = channelNo*returnedFrames;
+
+      	  // What does it mean that this is 64??
+	        // Does the data arrive with segment length 1? What are the 4 bonus channels?
           int rawStride = 64;
-          int rawOffset = ii;
+          int rawOffset = channelNo;
 
-          for(int kk = 0; kk < returnedFrames; kk++){
-            reordered[reorderedOffset + kk] = data[rawOffset + rawStride*kk];
+          for(int dataPointNo = 0; dataPointNo < returnedFrames; dataPointNo++){
+            reordered[reorderedOffset + dataPointNo] = data[rawOffset + rawStride*dataPointNo];
           }
         }
+
+				if(!hasLogged){
+						log.info($"{data[64*0]}");
+						log.info($"{data[64*1]}");
+						log.info($"{data[64*2]}");
+						log.info($"{data[64*3]}");
+						log.info($"{data[64*4]}");
+						log.info($"{data[64*5]}");
+						log.info($"{data[64*6]}");
+						log.info($"{data[64*7]}");
+						log.info($"{data[64*8]}");
+						log.info($"{data[64*9]}");
+
+						
+						log.info($"{reordered[0]}");
+						log.info($"{reordered[1]}");
+						log.info($"{reordered[2]}");
+						log.info($"{reordered[3]}");
+						log.info($"{reordered[4]}");
+						log.info($"{reordered[5]}");
+						log.info($"{reordered[6]}");
+						log.info($"{reordered[7]}");
+						log.info($"{reordered[8]}");
+						log.info($"{reordered[9]}");
+					hasLogged = true;
+				}
+
 
         Buffer.BlockCopy(reordered, 0, sendBuffer, 0, returnedFrames*4*60);
 

@@ -46,7 +46,7 @@ namespace MEAME2
         dspDevice.Disconnect();
       }
       else {
-        Console.WriteLine("Fug!");
+        log.err("DSP DEVICE NOT FOUND");
       }
     }
 

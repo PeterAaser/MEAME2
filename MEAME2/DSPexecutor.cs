@@ -35,6 +35,31 @@ namespace MEAME2
     public static uint STIM_BASE               = 0x9000;
     public static uint TRIGGER_CTRL_BASE       = 0x0200;
 
+    public static string parseWrite(uint address, uint value) {
+      if(address == 0x1008){
+        if(value == 1){ return  "(Function call: DUMP)" ;}
+        if(value == 2){ return  "(Function call: RESET)" ;}
+        if(value == 3){ return  "(Function call: CONFIGURE ELECTRODE GROUP)" ;}
+        if(value == 4){ return  "(Function call: SET ELECTRODE GROUP MANUAL)" ;}
+        if(value == 5){ return  "(Function call: SET ELECTRODE GROUP AUTO)" ;}
+        if(value == 6){ return  "(Function call: COMMIT CONFIG)" ;}
+        if(value == 7){ return  "(Function call: START STIM QUEUE)" ;}
+        if(value == 8){ return  "(Function call: STOP STIM QUEUE)" ;}
+        if(value == 9){ return  "(Function call: SET ELECTRODE GROUP PERIOD)" ;}
+        if(value == 10){ return "(Function call: ENABLE STIM GROUP)" ;}
+        if(value == 11){ return "(Function call: DISABLE STIM GROUP)" ;}
+        if(value == 12){ return "(Function call: COMMIT CONFIG DEBUG)" ;}
+        if(value == 13){ return "(Function call: WRITE SQ DEBUG)" ;}
+      }
+      if(address == 0x1014){ return $"(Setting stim period to {value})"; }
+      if(address == 0x1018){ return $"(Elec 0 set to {value})"; }
+      if(address == 0x101c){ return $"(Elec 1 set to {value})"; }
+      if((address == 0x1000 || address == 0x1004)){ return "(Book-Keeping)"; }
+      if(address == 0x1010){
+        return $"(Group index <- {value})";
+      }
+      return "";
+    }
 
     public LiveExecutor()
     {
@@ -61,7 +86,7 @@ namespace MEAME2
         dspDevice.Disconnect();
       }
       else {
-        Console.WriteLine("Fug!");
+        log.err("DSP DEVICE NOT FOUND!");
       }
     }
 
@@ -79,7 +104,7 @@ namespace MEAME2
       }
 
       public void write(uint address, uint word) {
-        log.info($"live executor writing:\0x{address:X} <- {word:X}");
+        log.info($"live executor writing:\0x{address:X} <- {word:X} {LiveExecutor.parseWrite(address, word)}");
         dspDevice.WriteRegister(address, word);
       }
 

@@ -38,6 +38,7 @@ namespace MEAME2
 
       Get["/"] = _ => "hello this is MEAME.";
 
+
       Post["/DAQ/connect"]       = _ => connectDAQ();
       Get["/DAQ/start"]          = _ => startDAQ();
       Get["/DAQ/stop"]           = _ => stopDAQ();
@@ -150,11 +151,17 @@ namespace MEAME2
       StringReader memeReader = new StringReader(body);
       JsonTextReader memer = new JsonTextReader(memeReader);
       JsonSerializer serializer = new JsonSerializer();
-      T r = serializer.Deserialize<T>(memer);
-      if(r == null){
-        log.err("deserialize error");
+      try {
+        T r = serializer.Deserialize<T>(memer);
+        if(r == null){
+          log.err("deserialize error");
+        }
+        return r;
       }
-      return r;
+      catch (Exception e){
+        log.err("deserialize for string {body} threw exception {e}");
+        throw e;
+      }
     }
 
 

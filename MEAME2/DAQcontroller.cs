@@ -1,3 +1,4 @@
+
 using System;
 using System.Net;
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace MEAME2
 
     public bool connectDataAcquisitionDevice(uint index){
 
+			try {
       this.rnd = new Random();
       this.someCounter = 0;
 
@@ -71,7 +73,18 @@ namespace MEAME2
       int ana, digi, che, tim, block;
       dataAcquisitionDevice.GetChannelLayout(out ana, out digi, out che, out tim, out block, 0);
 
-      dataAcquisitionDevice.SetSampleRate(samplerate, 1, 0);
+			log.info($"Setting samplerate to {samplerate}");
+			uint oversample = 0;
+			int virtualdevice = 0;
+      dataAcquisitionDevice.SetSampleRate(samplerate, oversample, virtualdevice);
+
+			var deviceSampleRate = dataAcquisitionDevice.GetSampleRate(virtualdevice);
+			log.info($"According to the device the samplerate should be {deviceSampleRate}");
+
+			if(deviceSampleRate != samplerate){
+					log.err($"DAQ error. Requested samplerate: {samplerate}, registered samplerate: {deviceSampleRate}");
+					return false;
+			}
 
       int gain = dataAcquisitionDevice.GetGain();
 
@@ -79,10 +92,11 @@ namespace MEAME2
       dataAcquisitionDevice.HWInfo().
         GetAvailableVoltageRangesInMicroVoltAndStringsInMilliVolt(out voltageranges);
 
-
+			/**
+				 Whatever this retarded shit is it's probably wrong in some way
+			 */
       bool[] selectedChannels = new bool[block*2];
-      for (int i = 0; i < block*2; i++){ selectedChannels[i] = true; } // hurr
-
+      for (int i = 0; i < block*2; i++){ selectedChannels[i] = true; }
 
       bool[] nChannels         = selectedChannels;
       int queueSize            = 640000;
@@ -152,6 +166,11 @@ namespace MEAME2
 
       return true;
     }
+			catch (Exception e){
+					log.err($"connecting to daq failed with {e}");
+					return false;
+			}
+		}
 
 
     private void _onChannelData(CMcsUsbDacqNet d, int cbHandle, int numSamples){
@@ -163,18 +182,11 @@ namespace MEAME2
         int channelEntry = 0;
         int frames = 0;
 
+        int[] buf = dataAcquisitionDevice.ChannelBlock_ReadFramesI32(handle,
+								     segmentLength,
+								     out returnedFrames);
 
-        // dataAcquisitionDevice.ChannelBlock_GetChannel
-        //   (handle,
-        //    channelEntry,
-        //    out totalChannels,
-        //    out offset,
-        //    out channels);
-
-        int[] buf = dataAcquisitionDevice.ChannelBlock_ReadFramesI32
-          (handle,
-           segmentLength,
-           out returnedFrames);
+				log.info($"returnedFrames: {returnedFrames}");
 
         onChannelData(buf, returnedFrames);
 

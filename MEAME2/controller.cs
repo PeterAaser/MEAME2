@@ -48,8 +48,8 @@ namespace MEAME2
       this.DAQrunning = false;
       this.dsp = new DSPComms();
 
-      // this.dspExecutor = new MockExecutor();
-      this.dspExecutor = new LiveExecutor();
+      this.dspExecutor = new MockExecutor();
+      // this.dspExecutor = new LiveExecutor();
     }
 
 
@@ -103,19 +103,25 @@ namespace MEAME2
     public bool connectDAQ(DAQconfig d){
 
       this.updateDeviceList();
-
       bool devicePresent = (devices.Any(p => p[p.Length - 1] == 'A'));
+      log.info(String.Join("\n",devices));
+
       if(devicePresent && !DAQconfigured){
         try {
+					this.DAQconfigured = true;
           this.daq.samplerate = d.samplerate;
           this.daq.segmentLength = d.segmentLength;
           this.daq.onChannelData = this.cm.OnChannelData;
+          log.info("Attempting to connect to daq");
           this.DAQconfigured = this.daq.connectDataAcquisitionDevice(0); // YOLO index arg
           this.DAQconfigured = true;
 
+          log.info("Seems like it worked");
           log.info(this.daq.ToString());
         }
         catch (Exception e) {
+	    
+          log.err($"{e}");
           // uhh...
           throw e;
         }
