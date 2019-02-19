@@ -25,6 +25,53 @@ namespace MEAME2
 
 				private bool hasLogged = false;
 
+				
+				// BlockCopy(Array SOURCE,
+				//           int SOURCE OFFSET IN BYTES,
+				//           Array DESTINATION,
+				//           int DESTINATION OFFSET IN BYTES,
+				//           int BYTES TO COPY
+				// public void OnChannelData(Dictionary<int, int[]> data, int returnedFrames){
+				public void OnChannelDataFrame(int[][] data, int returnedFrames){
+
+						int[] reordered = new int[returnedFrames*60];
+
+						if(ChannelListeners.Any()){
+
+								int offset = 0;
+								for(int frameNo = 0; frameNo < returnedFrames-1; frameNo++){
+										offset = 0;
+										for(int channelNo = 0; channelNo < 60; channelNo++){
+												offset += returnedFrames;
+												reordered[frameNo + offset] = data[frameNo][channelNo];
+										}
+								}
+
+
+								byte[] sendBuffer = new byte[returnedFrames * 60 * 4];
+								Buffer.BlockCopy(reordered, 0, sendBuffer, 0, returnedFrames*4*60);
+
+								/**
+									 Send data to listeners of all channels
+									 Removes disconnected listeners
+								*/
+								for(int ii = ChannelListeners.Count - 1; ii >= 0; ii--){
+										try {
+												ChannelListeners[ii].Send(sendBuffer);
+										}
+										catch (SocketException e) {
+												ChannelListeners.RemoveAt(ii);
+												log.info($"removed channel listener {ii}");
+												log.info($"now {ChannelListeners.Count} listeners");
+										}
+								}
+						}
+						if(SawToothListeners.Any()){
+								broadCastSawTooth(returnedFrames);
+						}
+				}
+
+				
 				// BlockCopy(Array SOURCE,
 				//           int SOURCE OFFSET IN BYTES,
 				//           Array DESTINATION,
@@ -50,32 +97,6 @@ namespace MEAME2
 										for(int dataPointNo = 0; dataPointNo < returnedFrames; dataPointNo++){
 												reordered[reorderedOffset + dataPointNo] = data[rawOffset + rawStride*dataPointNo];
 										}
-								}
-
-								if(!hasLogged){
-										log.info($"{data[64*0]}");
-										log.info($"{data[64*1]}");
-										log.info($"{data[64*2]}");
-										log.info($"{data[64*3]}");
-										log.info($"{data[64*4]}");
-										log.info($"{data[64*5]}");
-										log.info($"{data[64*6]}");
-										log.info($"{data[64*7]}");
-										log.info($"{data[64*8]}");
-										log.info($"{data[64*9]}");
-
-						
-										log.info($"{reordered[0]}");
-										log.info($"{reordered[1]}");
-										log.info($"{reordered[2]}");
-										log.info($"{reordered[3]}");
-										log.info($"{reordered[4]}");
-										log.info($"{reordered[5]}");
-										log.info($"{reordered[6]}");
-										log.info($"{reordered[7]}");
-										log.info($"{reordered[8]}");
-										log.info($"{reordered[9]}");
-										hasLogged = true;
 								}
 
 
