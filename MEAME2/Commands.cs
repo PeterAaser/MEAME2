@@ -50,7 +50,7 @@ namespace MEAME2
         {
           return typeof(RegWriteRequest);
         }
-        else
+        else if (jObject["func"] != null)
         {
           return typeof(DspFuncCall);
         }
