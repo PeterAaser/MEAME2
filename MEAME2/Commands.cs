@@ -1,9 +1,91 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MEAME2
 {
+  public class CommandSerializer
+  {
+    private static string commandsDir = "DspCommands/";
+
+
+    abstract class JsonCreationConverter<T> : JsonConverter
+    {
+      protected abstract Type GetType(Type objectType, JObject jObject);
+
+
+      public override bool CanConvert(Type objectType)
+      {
+        return typeof(T).IsAssignableFrom(objectType);
+      }
+
+
+      public override object ReadJson(JsonReader reader, Type objectType,
+                                      object existingValue, JsonSerializer serializer)
+      {
+        JObject jObject = JObject.Load(reader);
+        Type targetType = GetType(objectType, jObject);
+        object target = Activator.CreateInstance(targetType);
+        serializer.Populate(jObject.CreateReader(), target);
+        return target;
+      }
+
+
+      public override void WriteJson(JsonWriter writer, Object value,
+                                     JsonSerializer serializer)
+      {
+        throw new NotImplementedException();
+      }
+    }
+
+
+    class DspInteractionConverter : JsonCreationConverter<DspInteraction>
+    {
+      protected override Type GetType(Type objectType, JObject jObject)
+      {
+        if (jObject["addresses"] != null)
+        {
+          return typeof(RegWriteRequest);
+        }
+        else if (jObject["func"] != null)
+        {
+          return typeof(DspFuncCall);
+        }
+
+        throw new ApplicationException(String.Format(
+          "The given DspInteraction type {0} is not supported!", objectType));
+      }
+    }
+
+
+    public static T fromJSONFile<T>(string fp)
+    {
+      TextReader r = null;
+      Directory.CreateDirectory(commandsDir);
+      fp = commandsDir + fp;
+
+      try
+      {
+        r = new StreamReader(fp);
+        var contents = r.ReadToEnd();
+        return JsonConvert.DeserializeObject<T>(contents, new DspInteractionConverter());
+      }
+      finally
+      {
+        if (r != null)
+          r.Close();
+      }
+    }
+  }
+
+
+  public class DspInteraction
+  {
+  }
+
 
   [Serializable]
   public class DebugMessage
@@ -31,7 +113,7 @@ namespace MEAME2
 
 
   [Serializable]
-  public class DspFuncCall {
+  public class DspFuncCall : DspInteraction {
     public uint func { get; set; }
     public uint[] argAddrs { get; set; }
     public uint[] argVals { get; set; }
@@ -53,7 +135,7 @@ namespace MEAME2
 
 
   [Serializable]
-  public class RegWriteRequest {
+  public class RegWriteRequest : DspInteraction {
     public uint[] addresses { get; set; }
     public uint[] values { get; set; }
 
