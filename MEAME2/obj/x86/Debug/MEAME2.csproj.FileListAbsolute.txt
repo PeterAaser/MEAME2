@@ -17,4 +17,3 @@ C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.Reactive.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\bin\Debug\System.ValueTuple.xml
 C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.exe
 C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.pdb
-C:\Users\admin\Dropbox\MEAME2\MEAME2\obj\x86\Debug\MEAME2.csprojResolveAssemblyReference.cache
