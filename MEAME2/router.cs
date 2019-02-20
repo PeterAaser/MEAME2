@@ -49,6 +49,7 @@ namespace MEAME2
       Post["/DSP/call"]          = _ => callDspFunc();
       Post["/DSP/read"]          = _ => readDspRegs();
       Post["/DSP/write"]         = _ => writeDspRegs();
+      Get["/DSP/replay"]         = _ => replayDspRequests();
 
       Post["/aux/logmsg"]        = _ => logmsg();
     }
@@ -136,7 +137,36 @@ namespace MEAME2
       return 200;
     }
 
+    private dynamic replayDspRequests()
+    {
+      // (TODO): Hard code the replay to use for now. When different
+      // replays are needed this will have to be fixed.
+      string replay = "SHODANlog.json";
+      DspInteraction[] dspInteractions =
+        CommandSerializer.fromJSONFile<DspInteraction[]>(replay);
 
+      foreach (DspInteraction dspCall in dspInteractions)
+      {
+        string dspCallType = dspCall.GetType().Name.ToString();
+        switch (dspCallType)
+        {
+          case "DspFuncCall":
+            controller.executeDspFunc((DspFuncCall) dspCall);
+            break;
+          case "RegWriteRequest":
+            controller.executeDspWrite((RegWriteRequest) dspCall);
+            break;
+          default:
+            // Not exactly a useful return code for the client, but at
+            // least we print something helpful in MEAME.
+            log.err("Error deserializing replay of DSP calls");
+            log.err($"Got dspCallType {dspCallType}");
+            return 500;
+        }
+      }
+
+      return 200;
+    }
 
     private string getJsonBody(){
       var id = this.Request.Body;
