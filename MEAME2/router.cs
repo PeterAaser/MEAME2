@@ -78,12 +78,12 @@ namespace MEAME2
       bool connect = controller.connectDAQ(d);
 
       if (connect){
-	log.ok("DAQ connected");
-	return 200;
+        log.ok("DAQ connected");
+        return 200;
       }
       else{
-	log.err("Connecting to DAQ failed");
-	return 500;
+        log.err("Connecting to DAQ failed");
+        return 500;
       }
     }
 
@@ -91,8 +91,8 @@ namespace MEAME2
       log.info("Got request for DAQ start");
 
       if (controller.startServer()){
-	log.ok("DAQ server started");
-	return 200;
+        log.ok("DAQ server started");
+        return 200;
       }
 
       log.err("DAQ server failed to start");
@@ -114,9 +114,9 @@ namespace MEAME2
       DspFuncCall f = decode<DspFuncCall>(this.getJsonBody());
 
       if(controller.executeDspFunc(f))
-	return 200;
+        return 200;
       else
-	return 500;
+        return 500;
     }
 
     private dynamic readDspRegs(){
@@ -182,15 +182,15 @@ namespace MEAME2
       JsonTextReader memer = new JsonTextReader(memeReader);
       JsonSerializer serializer = new JsonSerializer();
       try {
-	T r = serializer.Deserialize<T>(memer);
-	if(r == null){
-	  log.err("deserialize error");
-	}
-	return r;
+        T r = serializer.Deserialize<T>(memer);
+        if(r == null){
+          log.err("deserialize error");
+        }
+        return r;
       }
       catch (Exception e){
-	log.err("deserialize for string {body} threw exception {e}");
-	throw e;
+        log.err("deserialize for string {body} threw exception {e}");
+        throw e;
       }
     }
 
@@ -199,8 +199,8 @@ namespace MEAME2
       var raw = Encoding.UTF8.GetBytes(resp);
       return new Response
       {
-	ContentType = "application/json",
-	Contents = s => s.Write(raw, 0, raw.Length)
+        ContentType = "application/json",
+        Contents = s => s.Write(raw, 0, raw.Length)
       };
     }
   }
