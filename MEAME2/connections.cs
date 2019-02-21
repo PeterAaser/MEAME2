@@ -42,11 +42,11 @@ namespace MEAME2
 	for(int frameNo = 0; frameNo < returnedFrames-1; frameNo++){
 	  offset = 0;
 	  for(int channelNo = 0; channelNo < 60; channelNo++){
-	    offset += returnedFrames;
-	    log.info($"attempting to extract from [{frameNo}][{channelNo}]");
+	    // log.info($"attempting to extract from [{frameNo}][{channelNo}]");
 	    var d = data[frameNo][channelNo];
-	    log.info($"attempting to insert into {frameNo + offset} using {frameNo} + {offset}");
+	    // log.info($"attempting to insert into {frameNo + offset} using {frameNo} + {offset}");
 	    reordered[frameNo + offset] = d;
+	    offset += returnedFrames;
 	  }
 	}
 

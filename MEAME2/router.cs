@@ -104,7 +104,7 @@ namespace MEAME2
     }
 
     private dynamic flashDsp(){
-      controller.flashDsp();
+      // controller.flashDsp();
       return 200;
     }
 

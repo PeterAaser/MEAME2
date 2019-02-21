@@ -208,11 +208,6 @@ namespace MEAME2
 									     segmentLength,
 									     out returnedFrames);
 
-	for(int ii = 0; ii < 1000; ii++){
-	  for(int kk = 0; kk < 256; kk++){
-	    buf[ii][kk] = kk*20;
-	  }
-	}
 	onChannelDataFrame(buf, returnedFrames);
 
 								
@@ -220,19 +215,18 @@ namespace MEAME2
 	  log.info($"{buf.Length()}");    // 1000
 	  log.info($"{buf[0].Length()}"); // 256 ??? WHAT (same shit repeated 4 times)
 
-	  var asString = String.Join(", ", buf[0]);
-	  var asString1= String.Join(", ", buf[1]);
-	  var asString2= String.Join(", ", buf[2]);
-	  var asString3= String.Join(", ", buf[3]);
-
-	  log.info("## 1 ##");
-	  log.info(asString);
-	  log.info("## 2 ##\n\n");
-	  log.info(asString1);
-	  log.info("## 3 ##\n\n");
-	  log.info(asString2);
-	  log.info("## 4 ##\n\n");
-	  log.info(asString3);
+	  // var asString = String.Join(", ", buf[0]);
+	  // var asString1= String.Join(", ", buf[1]);
+	  // var asString2= String.Join(", ", buf[2]);
+	  // var asString3= String.Join(", ", buf[3]);
+	  // log.info("## 1 ##");
+	  // log.info(asString);
+	  // log.info("## 2 ##\n\n");
+	  // log.info(asString1);
+	  // log.info("## 3 ##\n\n");
+	  // log.info(asString2);
+	  // log.info("## 4 ##\n\n");
+	  // log.info(asString3);
 	  // var stringBuf = new List<String>();
 	  // for(int ii = 0; ii < buf[0].Length(); ii++){
 	  // 		stringBuf.Add($"{buf[ii][0]}");
