@@ -49,7 +49,11 @@ namespace MEAME2
       Post["/DSP/call"]          = _ => callDspFunc();
       Post["/DSP/read"]          = _ => readDspRegs();
       Post["/DSP/write"]         = _ => writeDspRegs();
-      Get["/DSP/replay"]         = _ => replayDspRequests();
+
+      Get["/DSP/stim/enable"]    = _ => replayDspRequests("enableStim.json");
+      Get["/DSP/stim/disable"]   = _ => replayDspRequests("disableStim.json");
+      Get["/DSP/stim/start"]     = _ => replayDspRequests("startStim.json");
+      Get["/DSP/stim/stop"]      = _ => replayDspRequests("stopStim.json");
 
       Post["/aux/logmsg"]        = _ => logmsg();
     }
@@ -137,11 +141,8 @@ namespace MEAME2
       return 200;
     }
 
-    private dynamic replayDspRequests()
+    private dynamic replayDspRequests(string replay)
     {
-      // (TODO): Hard code the replay to use for now. When different
-      // replays are needed this will have to be fixed.
-      string replay = "SHODANlog.json";
       DspInteraction[] dspInteractions =
         CommandSerializer.fromJSONFile<DspInteraction[]>(replay);
 
