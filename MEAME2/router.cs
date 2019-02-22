@@ -50,8 +50,7 @@ namespace MEAME2
       Post["/DSP/read"]          = _ => readDspRegs();
       Post["/DSP/write"]         = _ => writeDspRegs();
 
-      Get["/DSP/stim/enable"]    = _ => replayDspRequests("enableStim.json");
-      Get["/DSP/stim/disable"]   = _ => replayDspRequests("disableStim.json");
+      Get["/DSP/stim/setup"]     = _ => replayDspRequests("setupStim.json");
       Get["/DSP/stim/start"]     = _ => replayDspRequests("startStim.json");
       Get["/DSP/stim/stop"]      = _ => replayDspRequests("stopStim.json");
 

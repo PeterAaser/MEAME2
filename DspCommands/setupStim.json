@@ -27,18 +27,18 @@
   ]
 },
 {
-  "func" : 8,
-  "argAddrs" : [
-  ],
-  "argVals" : [
-  ]
-},
-{
   "addresses" : [
     37388
   ],
   "values" : [
     0
+  ]
+},
+{
+  "func" : 8,
+  "argAddrs" : [
+  ],
+  "argVals" : [
   ]
 },
 {
@@ -70,18 +70,18 @@
   ]
 },
 {
-  "func" : 8,
-  "argAddrs" : [
-  ],
-  "argVals" : [
-  ]
-},
-{
   "addresses" : [
     37452
   ],
   "values" : [
     0
+  ]
+},
+{
+  "func" : 8,
+  "argAddrs" : [
+  ],
+  "argVals" : [
   ]
 },
 {
@@ -113,18 +113,18 @@
   ]
 },
 {
-  "func" : 8,
-  "argAddrs" : [
-  ],
-  "argVals" : [
-  ]
-},
-{
   "addresses" : [
     37516
   ],
   "values" : [
     0
+  ]
+},
+{
+  "func" : 8,
+  "argAddrs" : [
+  ],
+  "argVals" : [
   ]
 },
 {
@@ -250,5 +250,16 @@
   "argAddrs" : [
   ],
   "argVals" : [
+  ]
+},
+{
+  "func" : 9,
+  "argAddrs" : [
+    4112,
+    4116
+  ],
+  "argVals" : [
+    0,
+    5000
   ]
 }]
