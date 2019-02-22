@@ -1,0 +1,12 @@
+;; Set SG0 period to 100 millis
+{
+  "func" : 9,
+  "argAddrs" : [
+    4112,
+    4116
+  ],
+  "argVals" : [
+    0,
+    5000
+  ]
+},

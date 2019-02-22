@@ -9,7 +9,7 @@ namespace MEAME2
 {
   public class CommandSerializer
   {
-    private static string commandsDir = "DspCommands/";
+    private static string commandsDir = "../../../DspCommands/";
 
 
     abstract class JsonCreationConverter<T> : JsonConverter

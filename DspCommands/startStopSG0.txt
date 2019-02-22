@@ -1,0 +1,21 @@
+;; Enable SG0
+{
+  "func" : 10,
+  "argAddrs" : [
+    4112
+  ],
+  "argVals" : [
+    0
+  ]
+},
+
+;; Disable SG0
+{
+  "func" : 11,
+  "argAddrs" : [
+    4112
+  ],
+  "argVals" : [
+    0
+  ]
+},
